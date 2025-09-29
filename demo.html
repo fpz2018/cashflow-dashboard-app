@@ -1,0 +1,233 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Verbeterde Copy-Paste Functionaliteit - Demo</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        .code-block {
+            background: #f8f9fa;
+            border: 1px solid #e9ecef;
+            border-radius: 8px;
+            padding: 16px;
+            font-family: 'Monaco', 'Courier New', monospace;
+            font-size: 13px;
+            overflow-x: auto;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 p-8">
+    <div class="max-w-6xl mx-auto">
+        <h1 class="text-3xl font-bold text-gray-900 mb-2">🚀 Verbeterde Copy-Paste Functionaliteit</h1>
+        <p class="text-gray-600 mb-8">Uitgebreide analyse en verbeteringen voor de cashflow dashboard app</p>
+
+        <!-- Problem Analysis -->
+        <div class="bg-red-50 border-l-4 border-red-500 p-6 mb-8">
+            <h2 class="text-xl font-semibold text-red-800 mb-4">🔍 Geïdentificeerde Problemen</h2>
+            <ul class="space-y-2 text-red-700">
+                <li><strong>1. Beperkte datumformaatondersteuning</strong> - Alleen basis YYYY-MM-DD en DD-MM-YYYY</li>
+                <li><strong>2. Problemen met verschillende scheidingstekens</strong> - Geen automatische detectie</li>
+                <li><strong>3. Bedragformattering issues</strong> - Beperkte ondersteuning voor Europese/Amerikaanse formaten</li>
+                <li><strong>4. Geen flexibele header matching</strong> - Exacte naam matching vereist</li>
+                <li><strong>5. Slechte error handling</strong> - Onduidelijke foutmeldingen</li>
+                <li><strong>6. Beperkte copy-paste UX</strong> - Geen feedback voor gebruikers</li>
+            </ul>
+        </div>
+
+        <!-- Solutions -->
+        <div class="bg-green-50 border-l-4 border-green-500 p-6 mb-8">
+            <h2 class="text-xl font-semibold text-green-800 mb-4">✅ Geïmplementeerde Oplossingen</h2>
+            <div class="grid md:grid-cols-2 gap-6">
+                <div>
+                    <h3 class="font-semibold text-green-700 mb-2">🗓️ Uitgebreide Datumondersteuning</h3>
+                    <ul class="text-sm text-green-600 space-y-1">
+                        <li>• DD-MM-YYYY en DD/MM/YYYY</li>
+                        <li>• YYYY-MM-DD (ISO format)</li>
+                        <li>• MM/DD/YYYY (US format)</li>
+                        <li>• DD-MM-YY met auto 20XX</li>
+                        <li>• Excel serial dates</li>
+                        <li>• Datum + tijd formaten</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-700 mb-2">💰 Geavanceerde Bedragparsing</h3>
+                    <ul class="text-sm text-green-600 space-y-1">
+                        <li>• Europees: €1.234,56</li>
+                        <li>• Amerikaans: $1,234.56</li>
+                        <li>• Negatief met haakjes: (123.45)</li>
+                        <li>• Percentage: 15% → 0.15</li>
+                        <li>• Automatische valuta detectie</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-700 mb-2">📊 Intelligente Header Matching</h3>
+                    <ul class="text-sm text-green-600 space-y-1">
+                        <li>• Fuzzy matching voor kolomnamen</li>
+                        <li>• Meerdere talen ondersteuning</li>
+                        <li>• Automatische delimiter detectie</li>
+                        <li>• Header-loze data ondersteuning</li>
+                    </ul>
+                </div>
+                <div>
+                    <h3 class="font-semibold text-green-700 mb-2">🎯 Verbeterde UX</h3>
+                    <ul class="text-sm text-green-600 space-y-1">
+                        <li>• Modal import dialog</li>
+                        <li>• Live preview van data</li>
+                        <li>• Detailleerde error reporting</li>
+                        <li>• Instructies en voorbeelden</li>
+                        <li>• Auto-sluiten bij success</li>
+                    </ul>
+                </div>
+            </div>
+        </div>
+
+        <!-- Code Examples -->
+        <div class="space-y-8">
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">📝 Voorbeeld Copy-Paste Data</h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-2 text-blue-700">✅ Met Headers (Gedetecteerd)</h3>
+                        <div class="code-block">
+Datum	Beschrijving	Bedrag	Categorie
+01-01-2025	Kantoorartikelen	€125,50	Kantoor
+15-01-2025	Software licentie	450.00	IT
+25-01-2025	Brandstof	89,75	Vervoer
+02-02-2025	Marketing	1.234,56	Marketing
+                        </div>
+                        <button onclick="copyDemo1()" class="mt-2 px-3 py-1 bg-blue-500 text-white rounded text-sm hover:bg-blue-600">📋 Kopieer</button>
+                    </div>
+                    
+                    <div>
+                        <h3 class="font-semibold mb-2 text-green-700">✅ Zonder Headers (Auto-mapping)</h3>
+                        <div class="code-block">
+12/03/2025	Website onderhoud	€299,99	IT
+2025-03-15	Telefoonkosten	67.50	Kantoor
+20-3-25	Schoonmaak	45,25	Onderhoud
+                        </div>
+                        <button onclick="copyDemo2()" class="mt-2 px-3 py-1 bg-green-500 text-white rounded text-sm hover:bg-green-600">📋 Kopieer</button>
+                    </div>
+                </div>
+
+                <div class="mt-6">
+                    <h3 class="font-semibold mb-2 text-purple-700">✅ Verschillende Formaten (Flexible Parsing)</h3>
+                    <div class="code-block">
+2025-04-01;Software backup;€189.00;IT
+04/15/2025,Office supplies,(125.50),Office  
+2025-04-20	Fuel costs	$89.75	Transport
+25/04/25|Equipment|1,500.00€|Equipment
+                    </div>
+                    <button onclick="copyDemo3()" class="mt-2 px-3 py-1 bg-purple-500 text-white rounded text-sm hover:bg-purple-600">📋 Kopieer</button>
+                </div>
+            </div>
+
+            <!-- Technical Details -->
+            <div class="bg-white p-6 rounded-lg shadow">
+                <h2 class="text-xl font-semibold mb-4">⚙️ Technische Verbeteringen</h2>
+                
+                <div class="grid md:grid-cols-2 gap-6">
+                    <div>
+                        <h3 class="font-semibold mb-2 text-gray-700">🔧 Enhanced Functions</h3>
+                        <ul class="text-sm space-y-1 text-gray-600">
+                            <li><code>normalizeDate()</code> - 7 datumformaten</li>
+                            <li><code>normalizeAmount()</code> - Multi-valuta support</li>
+                            <li><code>detectDelimiter()</code> - Auto scheidingsteken</li>
+                            <li><code>findHeaderIndex()</code> - Fuzzy matching</li>
+                            <li><code>processCreditInvoicesData()</code> - Nieuwe processor</li>
+                        </ul>
+                    </div>
+                    <div>
+                        <h3 class="font-semibold mb-2 text-gray-700">📱 UI Components</h3>
+                        <ul class="text-sm space-y-1 text-gray-600">
+                            <li><code>CreditInvoiceImportForm</code> - Modal dialog</li>
+                            <li><code>ImportFeedback</code> - Error reporting</li>
+                            <li><code>VariableExpensesTab</code> - Enhanced tab</li>
+                            <li>Live processing feedback</li>
+                            <li>Auto-save integration</li>
+                        </ul>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Usage Instructions -->
+            <div class="bg-blue-50 p-6 rounded-lg">
+                <h2 class="text-xl font-semibold mb-4 text-blue-800">📚 Gebruiksaanwijzing</h2>
+                <div class="grid md:grid-cols-3 gap-6">
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">1️⃣</div>
+                        <h3 class="font-semibold mb-2">Kopieer Data</h3>
+                        <p class="text-sm text-gray-600">Selecteer en kopieer data uit Excel, Google Sheets, of CSV bestand</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">2️⃣</div>
+                        <h3 class="font-semibold mb-2">Open Import</h3>
+                        <p class="text-sm text-gray-600">Klik op "Importeren" knop in Creditfacturen tab</p>
+                    </div>
+                    <div class="text-center">
+                        <div class="text-3xl mb-2">3️⃣</div>
+                        <h3 class="font-semibold mb-2">Plak & Import</h3>
+                        <p class="text-sm text-gray-600">Plak data in textarea en klik "Importeren"</p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Footer -->
+        <div class="mt-12 text-center text-gray-500 border-t pt-6">
+            <p>✨ Verbeterde Copy-Paste functionaliteit voor Cashflow Dashboard</p>
+            <p class="text-sm mt-1">Ondersteuning voor flexibele data formaten en gebruiksvriendelijke import ervaring</p>
+        </div>
+    </div>
+
+    <script>
+        function copyDemo1() {
+            const text = `Datum\tBeschrijving\tBedrag\tCategorie
+01-01-2025\tKantoorartikelen\t€125,50\tKantoor
+15-01-2025\tSoftware licentie\t450.00\tIT
+25-01-2025\tBrandstof\t89,75\tVervoer
+02-02-2025\tMarketing\t1.234,56\tMarketing`;
+            copyToClipboard(text, event.target);
+        }
+
+        function copyDemo2() {
+            const text = `12/03/2025\tWebsite onderhoud\t€299,99\tIT
+2025-03-15\tTelefoonkosten\t67.50\tKantoor
+20-3-25\tSchoonmaak\t45,25\tOnderhoud`;
+            copyToClipboard(text, event.target);
+        }
+
+        function copyDemo3() {
+            const text = `2025-04-01;Software backup;€189.00;IT
+04/15/2025,Office supplies,(125.50),Office  
+2025-04-20\tFuel costs\t$89.75\tTransport
+25/04/25|Equipment|1,500.00€|Equipment`;
+            copyToClipboard(text, event.target);
+        }
+
+        function copyToClipboard(text, button) {
+            navigator.clipboard.writeText(text).then(() => {
+                const originalText = button.textContent;
+                const originalClass = button.className;
+                
+                button.textContent = '✅ Gekopieerd!';
+                button.className = originalClass.replace(/bg-\w+-500/, 'bg-green-500');
+                
+                setTimeout(() => {
+                    button.textContent = originalText;
+                    button.className = originalClass;
+                }, 2000);
+            }).catch(() => {
+                button.textContent = '❌ Fout';
+                setTimeout(() => {
+                    button.textContent = originalText;
+                }, 2000);
+            });
+        }
+    </script>
+</body>
+</html>
