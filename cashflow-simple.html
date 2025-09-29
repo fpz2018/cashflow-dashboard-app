@@ -231,6 +231,9 @@
                     <button onclick="setActiveTab('verzekeraars')" id="tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏥 Verzekeraars
                     </button>
+                    <button onclick="setActiveTab('particulier-facturen')" id="tab-particulier-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        👥 Particulier Facturen
+                    </button>
                     <button onclick="setActiveTab('credit-facturen')" id="tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔄 Credit Facturen
                     </button>
@@ -297,6 +300,27 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                 </div>
                 <button onclick="processVerzekeraars()" class="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
                     Zorgverzekeraars Verwerken
+                </button>
+            </div>
+
+            <!-- Particulier Facturen Upload (verborgen standaard) -->
+            <div id="upload-particulier-facturen" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">👥 Particulier Facturen Uploaden</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Debiteur | Bedrag<br>
+                        👤 <strong>Debiteur:</strong> Meestal persoonsnamen (bijv. Jan Jansen, Piet Peters)<br>
+                        💰 <strong>Bedrag:</strong> Positief bedrag dat als inkomst wordt verwacht<br>
+                        🔄 <strong>Voorbeeld:</strong> PF202500009600 | 24-9-2025 | Jan Jansen | € 155,27
+                    </p>
+                    <textarea id="particulier-facturen-data" placeholder="PF202500009600	24-9-2025	Jan Jansen	€ 155,27
+PF202500009601	25-9-2025	Piet Peters	€ 89,50
+PF202500009602	26-9-2025	Klaas de Vries	€ 125,00
+PF202500009603	27-9-2025	Maria Bakker	€ 75,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processParticulierFacturen()" class="px-6 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
+                    Particulier Facturen Verwerken
                 </button>
             </div>
 
@@ -389,6 +413,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     </button>
                     <button onclick="setBeheerTab('verzekeraars')" id="beheer-tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏥 Verzekeraars (<span id="verzekeraars-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('particulier-facturen')" id="beheer-tab-particulier-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        👥 Particulier Facturen (<span id="particulier-facturen-count">0</span>)
                     </button>
                     <button onclick="setBeheerTab('credit-facturen')" id="beheer-tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔄 Credit Facturen (<span id="credit-facturen-count">0</span>)
@@ -501,6 +528,39 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     </table>
                     <div id="no-verzekeraars" class="text-center py-8 text-gray-500" style="display: none;">
                         Geen zorgverzekeraars geïmporteerd. Standaard betaaltermijnen worden gebruikt.
+                    </div>
+                </div>
+            </div>
+
+            <!-- Particulier Facturen Beheer -->
+            <div id="beheer-particulier-facturen" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Particulier Facturen
+                    </h4>
+                    <button onclick="deleteAllParticulierFacturen()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verwachte Betaling</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="particulier-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-particulier-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen particulier facturen geïmporteerd
                     </div>
                 </div>
             </div>
@@ -639,6 +699,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
         let declaraties = [];
         let vasteKosten = [];
         let customVerzekeraars = []; // Custom verzekeraars overschrijven standaard
+        
+        // Particuliere facturen data
+        let particulierFacturen = []; // Voor particulieren: factuur, datum, debiteur, bedrag
         
         // Credit en correctie data
         let creditFacturen = []; // Voor particulieren: factuur, datum, debiteur, bedrag
@@ -1138,6 +1201,66 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             }
         }
 
+        // Verwerk particulier facturen
+        function processParticulierFacturen() {
+            const data = document.getElementById('particulier-facturen-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen particulier facturen data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Particulier facturen aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 4) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const debiteur = columns[2]?.trim();
+                            const bedragStr = columns[3]?.trim();
+                            
+                            if (factuur && datum && debiteur && bedragStr) {
+                                // Parse bedrag
+                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                
+                                if (!isNaN(bedrag) && bedrag > 0) {
+                                    // Particuliere facturen krijgen standaard 14 dagen betaaltermijn
+                                    const verwachteBetaaldatum = new Date(datum);
+                                    verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + 14);
+                                    
+                                    parsed.push({
+                                        factuur,
+                                        datum,
+                                        debiteur,
+                                        bedrag,
+                                        verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0]
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan particulier facturen array
+                particulierFacturen.push(...parsed);
+                
+                showStatus(`✅ ${parsed.length} particulier facturen verwerkt! Standaard betaaltermijn: 14 dagen.`, 'success');
+                document.getElementById('particulier-facturen-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken particulier facturen:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
         // Load demo data
         function loadDemoData() {
             // Demo declaraties voor 2025 (met exacte verzekeraars namen zoals in echte data)
@@ -1354,10 +1477,17 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 let dagInkomsten = 0;
                 let dagUitgaven = 0;
                 
-                // Check declaraties
+                // Check declaraties (verzekeringen)
                 declaraties.forEach(decl => {
                     if (decl.verwachteBetaaldatum === dagStr) {
                         dagInkomsten += decl.bedrag;
+                    }
+                });
+                
+                // Check particulier facturen
+                particulierFacturen.forEach(pf => {
+                    if (pf.verwachteBetaaldatum === dagStr) {
+                        dagInkomsten += pf.bedrag;
                     }
                 });
                 
@@ -1479,6 +1609,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             updateDeclaratiesTable();
             updateVasteKostenTable();
             updateVerzekeraarsTable();
+            updateParticulierFacturenTable();
             updateCreditFacturenTable();
             updateCreditDeclaratiesTable();
             updateCorrectieFacturenTable();
@@ -1490,6 +1621,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             document.getElementById('declaraties-count').textContent = declaraties.length;
             document.getElementById('vaste-kosten-count').textContent = vasteKosten.length;
             document.getElementById('verzekeraars-count').textContent = customVerzekeraars.length;
+            document.getElementById('particulier-facturen-count').textContent = particulierFacturen.length;
             document.getElementById('credit-facturen-count').textContent = creditFacturen.length;
             document.getElementById('credit-declaraties-count').textContent = creditDeclaraties.length;
             document.getElementById('correctie-facturen-count').textContent = correctieFacturen.length;
@@ -1710,6 +1842,29 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     bedrag: Math.abs(bedrag), // Vaste kosten zijn uitgaven
                     dag,
                     categorie
+                };
+                
+            } else if (editingType === 'particulier-factuur') {
+                const factuur = document.getElementById('edit-factuur').value;
+                const datum = document.getElementById('edit-datum').value;
+                const debiteur = document.getElementById('edit-debiteur').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                
+                if (!factuur || !datum || !debiteur || !bedrag || bedrag <= 0) {
+                    alert('Vul alle velden correct in! Bedrag moet positief zijn.');
+                    return;
+                }
+                
+                // Herbereken verwachte betaaldatum (14 dagen na factuurdatum)
+                const verwachteBetaaldatum = new Date(datum);
+                verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + 14);
+                
+                particulierFacturen[editingItem] = {
+                    factuur,
+                    datum,
+                    debiteur,
+                    bedrag,
+                    verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0]
                 };
                 
             } else if (editingType === 'credit-factuur') {
@@ -1964,6 +2119,54 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             }
         }
 
+        // === PARTICULIER FACTUREN TABLE UPDATE FUNCTIE ===
+
+        // Update particulier facturen table
+        function updateParticulierFacturenTable() {
+            const tbody = document.getElementById('particulier-facturen-table-body');
+            const noData = document.getElementById('no-particulier-facturen');
+            
+            tbody.innerHTML = '';
+            
+            if (particulierFacturen.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            // Sorteer op datum (nieuwste eerst)
+            const gesorteerd = [...particulierFacturen].sort((a, b) => new Date(b.datum) - new Date(a.datum));
+            
+            gesorteerd.forEach((pf, originalIndex) => {
+                // Vind de originele index voor edit/delete functies
+                const index = particulierFacturen.findIndex(item => 
+                    item.factuur === pf.factuur && item.datum === pf.datum && item.debiteur === pf.debiteur
+                );
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${pf.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(pf.datum).toLocaleDateString('nl-NL')}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${pf.debiteur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                        € ${pf.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
+                        ${new Date(pf.verwachteBetaaldatum).toLocaleDateString('nl-NL')}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editParticulierFactuur(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteParticulierFactuur(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
         // === CREDIT EN CORRECTIE TABLE UPDATE FUNCTIES ===
 
         // Update credit facturen table
@@ -2090,6 +2293,26 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             });
         }
 
+        // === DELETE FUNCTIES VOOR PARTICULIER FACTUREN ===
+
+        function deleteParticulierFactuur(index) {
+            if (confirm('Weet je zeker dat je deze particulier factuur wilt verwijderen?')) {
+                particulierFacturen.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Particulier factuur verwijderd!', 'success');
+            }
+        }
+
+        function deleteAllParticulierFacturen() {
+            if (confirm(`Weet je zeker dat je alle ${particulierFacturen.length} particulier facturen wilt verwijderen?`)) {
+                particulierFacturen = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle particulier facturen verwijderd!', 'success');
+            }
+        }
+
         // === DELETE FUNCTIES VOOR CREDIT/CORRECTIE ===
 
         function deleteCreditFactuur(index) {
@@ -2163,6 +2386,45 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 updatePrognose();
                 showStatus('✅ Alle correctie facturen verwijderd en originele bedragen hersteld!', 'success');
             }
+        }
+
+        // === EDIT FUNCTIES VOOR PARTICULIER FACTUREN ===
+
+        function editParticulierFactuur(index) {
+            const pf = particulierFacturen[index];
+            editingItem = index;
+            editingType = 'particulier-factuur';
+            
+            document.getElementById('edit-modal-title').textContent = 'Particulier Factuur Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Factuurnummer</label>
+                        <input type="text" id="edit-factuur" value="${pf.factuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                        <input type="date" id="edit-datum" value="${pf.datum}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Debiteur</label>
+                        <input type="text" id="edit-debiteur" value="${pf.debiteur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€)</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${pf.bedrag}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <strong>Verwachte betaling:</strong> ${new Date(pf.verwachteBetaaldatum).toLocaleDateString('nl-NL')} (14 dagen na factuurdatum)
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
         }
 
         // === EDIT FUNCTIES VOOR CREDIT/CORRECTIE ===
