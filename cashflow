@@ -1,0 +1,591 @@
+import React, { useState, useMemo, useEffect, useCallback } from 'react';
+import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ComposedChart } from 'recharts';
+
+// --- Utility: Unique ID Generator ---
+const generateUniqueId = () => {
+    return `${Date.now()}-${Math.random().toString(36).substr(2, 9)}`;
+};
+
+// --- SVG Icons ---
+const Icon = ({ children, size = 20, className = '' }) => (
+  <svg xmlns="http://www.w3.org/2000/svg" width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={className}>
+    {children}
+  </svg>
+);
+
+const Plus = (props) => <Icon {...props}><path d="M12 5v14"/><path d="M5 12h14"/></Icon>;
+const Trash2 = (props) => <Icon {...props}><path d="M3 6h18"/><path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"/><path d="M10 11v6"/><path d="M14 11v6"/></Icon>;
+const Download = (props) => <Icon {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="7 10 12 15 17 10"/><line x1="12" y1="15" x2="12" y2="3"/></Icon>;
+const Upload = (props) => <Icon {...props}><path d="M21 15v4a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-4"/><polyline points="17 8 12 3 7 8"/><line x1="12" y1="3" x2="12" y2="15"/></Icon>;
+const Edit = (props) => <Icon {...props}><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7" /><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z" /></Icon>;
+const TrendingUp = (props) => <Icon {...props}><polyline points="23 6 13.5 15.5 8.5 10.5 1 18"/></Icon>;
+const Euro = (props) => <Icon {...props}><path d="M4 10h12"/><path d="M4 14h12"/><path d="M17 18c-4.42 0-8-3.58-8-8s3.58-8 8-8"/></Icon>;
+const Calendar = (props) => <Icon {...props}><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></Icon>;
+const RefreshCw = (props) => <Icon {...props}><path d="M3 2v6h6"/><path d="M21 12A9 9 0 0 0 6 5.3L3 8"/><path d="M21 22v-6h-6"/><path d="M3 12a9 9 0 0 0 15 6.7l3-2.7"/></Icon>;
+const AlertCircle = (props) => <Icon {...props}><circle cx="12" cy="12" r="10"/><line x1="12" y1="8" x2="12" y2="12"/><line x1="12" y1="16" x2="12.01" y2="16"/></Icon>;
+
+// --- Utility Functions ---
+const formatDateNL = (dateString) => {
+    if (!dateString) return '-';
+    try {
+        const date = new Date(dateString);
+        if (isNaN(date.getTime())) return 'Ongeldige datum';
+        return date.toLocaleDateString('nl-NL', { day: '2-digit', month: 'short', year: 'numeric' });
+    } catch (e) {
+        return '-';
+    }
+};
+
+const formatCurrencyNL = (amount) => {
+    if (typeof amount !== 'number') {
+        amount = parseFloat(amount);
+    }
+    if (isNaN(amount)) {
+        return '€ 0,00';
+    }
+    return new Intl.NumberFormat('nl-NL', { style: 'currency', currency: 'EUR' }).format(amount);
+};
+
+const getExpectedPaymentDateByTerm = (invoiceDate, term) => {
+    if (!invoiceDate || typeof term !== 'number') return null;
+    const date = new Date(invoiceDate);
+    date.setDate(date.getDate() + term);
+    return date.toISOString().split('T')[0];
+};
+
+const normalizeDate = (dateStr) => {
+    if (!dateStr) throw new Error('Datum is leeg');
+    
+    const cleaned = dateStr.trim();
+    
+    const patterns = [
+        { regex: /^(\d{4})-(\d{1,2})-(\d{1,2})$/, order: ['year', 'month', 'day'] },
+        { regex: /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{4})$/, order: ['day', 'month', 'year'] },
+        { regex: /^(\d{1,2})[-\/](\d{1,2})[-\/](\d{2})$/, order: ['day', 'month', 'year'], yearPrefix: '20' }
+    ];
+    
+    for (const pattern of patterns) {
+        const match = cleaned.match(pattern.regex);
+        if (match) {
+            const values = {};
+            pattern.order.forEach((key, index) => {
+                values[key] = match[index + 1];
+            });
+            
+            if (pattern.yearPrefix && values.year.length === 2) {
+                values.year = pattern.yearPrefix + values.year;
+            }
+            
+            const year = parseInt(values.year);
+            const month = parseInt(values.month);
+            const day = parseInt(values.day);
+            
+            const date = new Date(year, month - 1, day);
+            if (date.getFullYear() === year && 
+                date.getMonth() === month - 1 && 
+                date.getDate() === day) {
+                return `${year}-${String(month).padStart(2, '0')}-${String(day).padStart(2, '0')}`;
+            }
+        }
+    }
+    
+    throw new Error(`Ongeldig datumformaat: ${dateStr}`);
+};
+
+const normalizeAmount = (amountStr) => {
+    if (!amountStr) return 0;
+    
+    let str = String(amountStr).trim().replace('€', '').trim();
+    str = str.replace(/\s/g, '');
+    
+    const lastComma = str.lastIndexOf(',');
+    const lastDot = str.lastIndexOf('.');
+    
+    if (lastComma > lastDot) {
+        str = str.replace(/\./g, '').replace(',', '.');
+    } else {
+        str = str.replace(/,/g, '');
+    }
+    
+    const amount = parseFloat(str);
+    
+    if (isNaN(amount)) {
+        throw new Error(`Ongeldig bedrag: ${amountStr}`);
+    }
+    
+    return Math.round(amount * 100) / 100;
+};
+
+// --- Data Processing ---
+const processPastedData = (pasteData, requiredHeadersMap, rowProcessor) => {
+    const lines = pasteData.trim().split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error('Minimaal 2 regels nodig (header + data).');
+    
+    const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+    const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+    
+    const headerMap = {};
+    for (const key in requiredHeadersMap) {
+        const config = requiredHeadersMap[key];
+        const searchTerms = config.keys;
+        const isOptional = config.optional === true;
+
+        const index = headers.findIndex(h => searchTerms.some(term => h.includes(term)));
+        
+        if (index === -1 && !isOptional) {
+            throw new Error(`Kolom '${key}' niet gevonden. Gevonden kolommen: ${headers.join(', ')}`);
+        }
+        headerMap[key] = index;
+    }
+
+    const newData = [];
+    const skippedRows = [];
+    
+    for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(delimiter).map(cell => cell.trim().replace(/['"]/g, ''));
+        if (row.every(cell => !cell)) continue;
+        
+        try {
+            const processedRow = rowProcessor(row, headerMap);
+            if (processedRow) {
+                newData.push({
+                    id: generateUniqueId(),
+                    ...processedRow
+                });
+            }
+        } catch (error) {
+            skippedRows.push({ 
+                row: i + 1, 
+                reason: error.message, 
+                originalData: row.slice(0, 5).join(delimiter) + (row.length > 5 ? '...' : '')
+            });
+        }
+    }
+    
+    return { newData, skippedRows };
+};
+
+const processBankCsvData = (csvText) => {
+    const lines = csvText.trim().split('\n').filter(line => line.trim());
+    if (lines.length < 2) throw new Error('Minimaal 2 regels nodig (header + data).');
+
+    const delimiter = lines[0].includes('\t') ? '\t' : (lines[0].includes(';') ? ';' : ',');
+    const headers = lines[0].split(delimiter).map(h => h.trim().toLowerCase().replace(/['"]/g, ''));
+
+    const findHeader = (possibleNames) => headers.findIndex(h => possibleNames.some(name => h.includes(name)));
+
+    const headerMap = {
+        date: findHeader(['datum', 'boekingsdatum', 'date']),
+        debtor: findHeader(['debiteur', 'naam', 'tegenpartij', 'name']),
+        description: findHeader(['omschrijving', 'mededeling', 'description']),
+        amount: findHeader(['bedrag', 'amount']),
+        credit: findHeader(['bij', 'credit']),
+        debit: findHeader(['af', 'debit'])
+    };
+
+    if (headerMap.date === -1) {
+        throw new Error("Datum kolom niet gevonden. Gevonden kolommen: " + headers.join(', '));
+    }
+    if (headerMap.debtor === -1 && headerMap.description === -1) {
+        throw new Error("Naam of omschrijving kolom niet gevonden.");
+    }
+    if (headerMap.amount === -1 && (headerMap.credit === -1 || headerMap.debit === -1)) {
+        throw new Error("Bedrag kolom niet gevonden.");
+    }
+
+    const newData = [];
+    const skippedRows = [];
+
+    for (let i = 1; i < lines.length; i++) {
+        const row = lines[i].split(delimiter).map(cell => cell.trim().replace(/['"]/g, ''));
+        if (row.every(cell => !cell)) continue;
+
+        try {
+            let amount;
+            if (headerMap.amount !== -1 && row[headerMap.amount]) {
+                amount = normalizeAmount(row[headerMap.amount]);
+            } else if (headerMap.credit !== -1 && headerMap.debit !== -1) {
+                const credit = row[headerMap.credit] ? normalizeAmount(row[headerMap.credit]) : 0;
+                const debit = row[headerMap.debit] ? normalizeAmount(row[headerMap.debit]) : 0;
+                amount = credit - debit;
+            } else {
+                throw new Error("Geen bedrag gevonden");
+            }
+
+            const processedRow = {
+                date: normalizeDate(row[headerMap.date]),
+                debtorName: row[headerMap.debtor] || row[headerMap.description] || 'Onbekend',
+                description: row[headerMap.description] || row[headerMap.debtor] || '',
+                amount: amount,
+                status: 'unmatched',
+            };
+            newData.push({id: generateUniqueId(), ...processedRow});
+        } catch (error) {
+            skippedRows.push({ 
+                row: i + 1, 
+                reason: error.message,
+                originalData: row.slice(0, 4).join(' | ')
+            });
+        }
+    }
+    return { newData, skippedRows };
+};
+
+// --- LocalStorage helpers ---
+const useAutoSave = (key, data) => {
+    useEffect(() => {
+        const timer = setTimeout(() => {
+            try {
+                localStorage.setItem(key, JSON.stringify(data));
+            } catch (e) {
+                console.error('Auto-save failed:', e);
+            }
+        }, 1000);
+        return () => clearTimeout(timer);
+    }, [key, data]);
+};
+
+const loadFromLocalStorage = (key, defaultValue) => {
+    try {
+        const stored = localStorage.getItem(key);
+        return stored ? JSON.parse(stored) : defaultValue;
+    } catch (e) {
+        console.error('Failed to load from localStorage:', e);
+        return defaultValue;
+    }
+};
+
+// --- Sub Components ---
+const Notification = ({ message, type, onClose }) => {
+    useEffect(() => {
+        const timer = setTimeout(() => onClose(), 6000);
+        return () => clearTimeout(timer);
+    }, [onClose]);
+    
+    const colors = { 
+        success: 'bg-green-100 border-green-500 text-green-800', 
+        error: 'bg-red-100 border-red-500 text-red-800', 
+        info: 'bg-blue-100 border-blue-500 text-blue-800' 
+    };
+    
+    return (
+        <div className={`fixed top-5 right-5 max-w-sm w-full p-4 border-l-4 rounded-lg shadow-lg z-50 ${colors[type] || colors.info}`} role="alert">
+            <div className="flex justify-between items-start">
+                <div className="flex-grow">
+                    <p className="font-bold capitalize">{type}</p>
+                    <p className="text-sm whitespace-pre-wrap">{message}</p>
+                </div>
+                <button onClick={onClose} className="ml-4 -mt-2 -mr-2 p-1 text-2xl font-bold leading-none hover:text-black">&times;</button>
+            </div>
+        </div>
+    );
+};
+
+const ImportFeedback = ({ feedback, onClear }) => {
+    if (!feedback || feedback.skippedRows.length === 0) return null;
+
+    return (
+        <div className="mt-4 p-4 bg-yellow-50 border border-yellow-200 rounded-lg">
+            <div className="flex justify-between items-center">
+                <h4 className="font-semibold text-yellow-800">Import Waarschuwingen</h4>
+                <button onClick={onClear} className="text-yellow-500 hover:text-yellow-700 font-bold">&times;</button>
+            </div>
+            <p className="text-sm text-yellow-700 mt-1">{feedback.skippedRows.length} rijen konden niet worden verwerkt:</p>
+            <ul className="mt-2 list-disc list-inside text-sm text-yellow-700 space-y-1 max-h-40 overflow-y-auto">
+                {feedback.skippedRows.slice(0, 10).map((skipped, index) => (
+                    <li key={index}>
+                        <strong>Rij {skipped.row}:</strong> {skipped.reason}
+                        {skipped.originalData && (
+                            <pre className="text-xs bg-yellow-100 p-1 rounded mt-1 overflow-x-auto">{skipped.originalData}</pre>
+                        )}
+                    </li>
+                ))}
+            </ul>
+        </div>
+    );
+};
+
+const LastImportInfo = ({ date }) => {
+    if (!date) return null;
+    return (
+        <div className="text-sm text-gray-500 mb-4">
+            Laatst geïmporteerde datum: {formatDateNL(date)}
+        </div>
+    );
+};
+
+const StatCard = ({ icon, title, value, color }) => (
+    <div className={`bg-${color}-50 p-4 rounded-lg shadow`}>
+        <div className="flex items-center gap-3 mb-2">
+            {icon}
+            <span className="text-sm text-gray-600 font-medium">{title}</span>
+        </div>
+        <p className={`text-2xl font-bold text-${color}-600`}>{value}</p>
+    </div>
+);
+
+const ChartCard = ({ title, children }) => (
+    <div className="bg-white p-4 rounded-lg shadow mt-6">
+        <h3 className="text-xl font-semibold mb-4 text-gray-700">{title}</h3>
+        {children}
+    </div>
+);
+
+const DataTable = ({ headers, rows }) => (
+    <table className="w-full">
+        <thead className="bg-gray-50">
+            <tr>
+                {headers.map((h, i) => (
+                    <th key={i} className="sticky top-0 px-4 py-3 text-left text-sm font-semibold text-gray-600 bg-gray-100 z-10">
+                        {h}
+                    </th>
+                ))}
+            </tr>
+        </thead>
+        <tbody className="divide-y divide-gray-200">
+            {rows.length === 0 ? (
+                <tr>
+                    <td colSpan={headers.length} className="px-4 py-8 text-center text-gray-500">
+                        Geen data beschikbaar
+                    </td>
+                </tr>
+            ) : (
+                rows.map(row => (
+                    <tr key={row.id} className="hover:bg-gray-50">
+                        {row.cols.map((col, i) => (
+                            <td key={i} className="px-4 py-3 text-gray-700">{col}</td>
+                        ))}
+                    </tr>
+                ))
+            )}
+        </tbody>
+    </table>
+);
+
+// Dashboard Tab
+const DashboardTab = ({ stats, cashflowData }) => (
+    <div>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 mb-6">
+            <StatCard icon={<Euro className="text-blue-600" />} title="Verwachte Inkomsten (30d)" value={formatCurrencyNL(stats.totalIncome)} color="blue" />
+            <StatCard icon={<TrendingUp className="text-red-600" />} title="Verwachte Uitgaven (30d)" value={formatCurrencyNL(stats.totalExpenses)} color="red" />
+            <StatCard icon={<Calendar className="text-green-600" />} title="Netto Cashflow (30d)" value={formatCurrencyNL(stats.netCashflow)} color="green" />
+            <StatCard icon={<Euro className="text-purple-600" />} title="Verwacht Saldo (30d)" value={formatCurrencyNL(stats.endBalance)} color="purple" />
+        </div>
+        <ChartCard title="Banksaldo 2025">
+             <ResponsiveContainer width="100%" height={300}>
+                <LineChart data={cashflowData}>
+                    <CartesianGrid strokeDasharray="3 3" />
+                    <XAxis dataKey="dateNL" tick={{fontSize: 12}} interval={30} />
+                    <YAxis tickFormatter={(value) => formatCurrencyNL(value)}/>
+                    <Tooltip formatter={(value) => formatCurrencyNL(value)} />
+                    <Legend />
+                    <Line type="monotone" dataKey="balance" stroke="#8b5cf6" strokeWidth={2} name="Banksaldo" dot={false} />
+                </LineChart>
+            </ResponsiveContainer>
+        </ChartCard>
+    </div>
+);
+
+// Debtors Tab
+const DebtorManagementTab = ({ title, debtors, onAdd, onUpdate, onDelete, onBulkImport }) => {
+    const [newItem, setNewItem] = useState({ name: '', paymentTerm: 30 });
+    const [editingId, setEditingId] = useState(null);
+    const [pasteData, setPasteData] = useState('');
+    const [importFeedback, setImportFeedback] = useState(null);
+    const isEditing = editingId !== null;
+
+    const handleEditClick = useCallback((debtor) => {
+        if (debtor.isSystem) return;
+        setEditingId(debtor.id);
+        setNewItem({ name: debtor.name, paymentTerm: debtor.paymentTerm });
+    }, []);
+
+    const handleCancelEdit = useCallback(() => {
+        setEditingId(null);
+        setNewItem({ name: '', paymentTerm: 30 });
+    }, []);
+
+    const handleSave = useCallback(() => {
+        const debtorData = { ...newItem, paymentTerm: parseInt(newItem.paymentTerm, 10) };
+        if (debtorData.name && !isNaN(debtorData.paymentTerm)) {
+            isEditing ? onUpdate({ id: editingId, ...debtorData }) : onAdd(debtorData);
+            handleCancelEdit();
+        }
+    }, [newItem, isEditing, editingId, onUpdate, onAdd, handleCancelEdit]);
+    
+    const handleImportClick = useCallback(() => {
+        if (pasteData.trim()) {
+            const feedback = onBulkImport(pasteData);
+            setImportFeedback(feedback);
+            setPasteData('');
+        }
+    }, [pasteData, onBulkImport]);
+
+    return (
+        <div>
+            <h2 className="text-2xl font-semibold mb-4">{title} Beheren</h2>
+            <div className="bg-gray-50 p-4 rounded mb-6">
+                <h3 className="font-medium mb-2">{isEditing ? `${title.slice(0,-1)} wijzigen` : `Nieuwe ${title.slice(0,-1)} toevoegen`}</h3>
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                    <input 
+                        type="text" 
+                        placeholder={`Naam ${title.slice(0,-1)}`} 
+                        value={newItem.name} 
+                        onChange={e => setNewItem({ ...newItem, name: e.target.value })} 
+                        className="p-2 border rounded" 
+                    />
+                    <input 
+                        type="number" 
+                        placeholder="Betalingstermijn (dagen)" 
+                        value={newItem.paymentTerm} 
+                        onChange={e => setNewItem({ ...newItem, paymentTerm: e.target.value })} 
+                        className="p-2 border rounded" 
+                    />
+                    <button onClick={handleSave} className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700">
+                        {isEditing ? 'Opslaan' : 'Toevoegen'}
+                    </button>
+                </div>
+            </div>
+            <div className="overflow-auto max-h-[600px] bg-white rounded-lg shadow">
+                <DataTable
+                    headers={['Naam', 'Betalingstermijn (dagen)', 'Acties']}
+                    rows={debtors.map(d => ({
+                        id: d.id,
+                        cols: [
+                            d.name, 
+                            d.paymentTerm, 
+                            <div className="flex gap-4">
+                                <button onClick={() => handleEditClick(d)} className="text-blue-600 hover:text-blue-800">
+                                    <Edit size={18} />
+                                </button>
+                                <button onClick={() => onDelete(d.id)} className="text-red-600 hover:text-red-800">
+                                    <Trash2 size={18} />
+                                </button>
+                            </div>
+                        ]
+                    }))}
+                />
+            </div>
+        </div>
+    );
+};
+
+// Main Application
+const CashflowDashboard = () => {
+    const [activeTab, setActiveTab] = useState('dashboard');
+    const [notification, setNotification] = useState(null);
+    
+    // Initial data
+    const initialData = {
+        startBalance: 25000,
+        insurers: [
+            { id: generateUniqueId(), name: 'Zilveren Kruis', paymentTerm: 30 },
+            { id: generateUniqueId(), name: 'VGZ', paymentTerm: 28 }
+        ],
+        declarations: [],
+        otherDebtors: [
+            { id: generateUniqueId(), name: 'Onderhuur Kantoorruimte', paymentTerm: 7 }
+        ],
+        otherInvoices: [],
+        fixedCreditors: [
+            { id: generateUniqueId(), name: 'Huur kantoor', amount: 1200, dayOfMonth: 1 },
+            { id: generateUniqueId(), name: 'Salaris', amount: 5500, dayOfMonth: 28 }
+        ],
+        variableExpenses: [],
+        corrections: []
+    };
+    
+    // State management
+    const [startBalance, setStartBalance] = useState(initialData.startBalance);
+    const [insurers, setInsurers] = useState(initialData.insurers);
+    const [declarations, setDeclarations] = useState(initialData.declarations);
+    const [otherDebtors, setOtherDebtors] = useState(initialData.otherDebtors);
+    const [otherInvoices, setOtherInvoices] = useState(initialData.otherInvoices);
+    const [fixedCreditors, setFixedCreditors] = useState(initialData.fixedCreditors);
+    const [variableExpenses, setVariableExpenses] = useState(initialData.variableExpenses);
+    const [bankTransactions, setBankTransactions] = useState([]);
+    const [corrections, setCorrections] = useState(initialData.corrections);
+    
+    // Calculate cashflow data
+    const cashflowData = useMemo(() => {
+        const data = [];
+        const startDate = new Date('2025-01-01');
+        const endDate = new Date('2025-12-31');
+        
+        for (let d = new Date(startDate); d <= endDate; d.setDate(d.getDate() + 1)) {
+            const dateStr = d.toISOString().split('T')[0];
+            const currentDayOfMonth = d.getDate();
+            let income = 0;
+            let expenses = 0;
+
+            // Calculate expected income
+            declarations.forEach(dec => {
+                if (dec.status !== 'paid') {
+                    const insurer = insurers.find(i => i.id === dec.debtorId);
+                    const paymentDate = getExpectedPaymentDateByTerm(dec.date, insurer?.paymentTerm);
+                    if (paymentDate === dateStr) income += dec.amount;
+                }
+            });
+
+            otherInvoices.forEach(inv => {
+                if (inv.status !== 'paid') {
+                    const debtor = otherDebtors.find(d => d.id === inv.debtorId);
+                    const paymentDate = getExpectedPaymentDateByTerm(inv.date, debtor?.paymentTerm);
+                    if (paymentDate === dateStr) income += inv.amount;
+                }
+            });
+
+            // Calculate fixed expenses
+            fixedCreditors.forEach(cred => {
+                if (cred.dayOfMonth === currentDayOfMonth) expenses += cred.amount;
+            });
+            
+            // Calculate variable expenses
+            variableExpenses.forEach(exp => {
+                if (exp.date === dateStr) expenses += exp.amount;
+            });
+            
+            data.push({ 
+                date: dateStr, 
+                dateNL: formatDateNL(dateStr).substring(0, 6), 
+                income, 
+                expenses, 
+                net: income - expenses 
+            });
+        }
+        
+        // Calculate running balance
+        let balance = startBalance;
+        return data.map(day => ({ ...day, balance: balance += day.net }));
+    }, [declarations, fixedCreditors, otherInvoices, variableExpenses, insurers, otherDebtors, startBalance]);
+    
+    // Calculate statistics
+    const stats = useMemo(() => {
+        const today = new Date();
+        today.setFullYear(2025);
+        const todayStr = today.toISOString().split('T')[0];
+        const startIndex = cashflowData.findIndex(d => d.date >= todayStr);
+        
+        if (startIndex === -1) {
+            return { 
+                totalIncome: 0, 
+                totalExpenses: 0, 
+                netCashflow: 0, 
+                endBalance: cashflowData.length > 0 ? cashflowData[cashflowData.length - 1].balance : startBalance 
+            };
+        }
+
+        const next30Days = cashflowData.slice(startIndex, startIndex + 30);
+        const totalIncome = next30Days.reduce((sum, day) => sum + day.income, 0);
+        const totalExpenses = next30Days.reduce((sum, day) => sum + day.expenses, 0);
+        const endBalance = next30Days.length > 0 ? 
+            next30Days[next30Days.length - 1].balance : 
+            (cashflowData[startIndex - 1]?.balance || startBalance);
+        
+        return { 
+            totalIncome, 
+            totalExpenses, 
+            netCashflow: totalIncome - totalExpenses, 
+            endBalance 
+        };
+    }, [cashflowData,
