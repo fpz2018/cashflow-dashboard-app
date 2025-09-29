@@ -221,7 +221,7 @@
             
             <!-- Upload Tabs -->
             <div class="border-b border-gray-200 mb-6">
-                <nav class="-mb-px flex space-x-8">
+                <nav class="-mb-px flex flex-wrap gap-2">
                     <button onclick="setActiveTab('declaraties')" id="tab-declaraties" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏥 EPD Declaraties
                     </button>
@@ -229,7 +229,16 @@
                         💸 Vaste Kosten
                     </button>
                     <button onclick="setActiveTab('verzekeraars')" id="tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                        🏥 Zorgverzekeraars
+                        🏥 Verzekeraars
+                    </button>
+                    <button onclick="setActiveTab('credit-facturen')" id="tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔄 Credit Facturen
+                    </button>
+                    <button onclick="setActiveTab('credit-declaraties')" id="tab-credit-declaraties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        ↩️ Credit Declaraties
+                    </button>
+                    <button onclick="setActiveTab('correctie-facturen')" id="tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔧 Correctie Facturen
                     </button>
                 </nav>
             </div>
@@ -291,6 +300,65 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                 </button>
             </div>
 
+            <!-- Credit Facturen Upload (verborgen standaard) -->
+            <div id="upload-credit-facturen" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🔄 Credit Facturen Uploaden (Particulieren)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Debiteur | Bedrag<br>
+                        💰 <strong>Bedrag:</strong> Positief getal voor credit (wordt afgetrokken van inkomsten)<br>
+                        🔄 <strong>Voorbeeld:</strong> CF202500009600 | 24-9-2025 | Jan Jansen | € 155,27
+                    </p>
+                    <textarea id="credit-facturen-data" placeholder="CF202500009600	24-9-2025	Jan Jansen	€ 155,27
+CF202500009601	25-9-2025	Piet Peters	€ 89,50
+CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processCreditFacturen()" class="px-6 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors">
+                    Credit Facturen Verwerken
+                </button>
+            </div>
+
+            <!-- Credit Declaraties Upload (verborgen standaard) -->
+            <div id="upload-credit-declaraties" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">↩️ Credit Declaraties Uploaden (Verzekeraars)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Verzekeraar | Originele Factuur | Bedrag<br>
+                        💰 <strong>Bedrag:</strong> Positief getal voor credit (systeem zoekt originele declaratie)<br>
+                        🔍 <strong>Matching:</strong> Originele factuur wordt automatisch gezocht en gecorrigeerd<br>
+                        🔄 <strong>Voorbeeld:</strong> CD202500009600 | 24-9-2025 | a.s.r. Zorg | 202500009600 | € 155,27
+                    </p>
+                    <textarea id="credit-declaraties-data" placeholder="CD202500009600	24-9-2025	a.s.r. Zorg	202500009600	€ 155,27
+CD202500009601	25-9-2025	CZ Zorgverzekeringen	202500009601	€ 89,50
+CD202500009602	26-9-2025	VGZ	202500009602	€ 125,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processCreditDeclaraties()" class="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+                    Credit Declaraties Verwerken
+                </button>
+            </div>
+
+            <!-- Correctie Facturen Upload (verborgen standaard) -->
+            <div id="upload-correctie-facturen" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🔧 Correctie Facturen Uploaden (Verzekeraars)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Verzekeraar | Originele Factuur | Bedrag<br>
+                        💰 <strong>Bedrag:</strong> Kan positief (bijboeking) of negatief (correctie) zijn<br>
+                        🔍 <strong>Matching:</strong> Originele factuur wordt automatisch gezocht en bijgewerkt<br>
+                        🔄 <strong>Voorbeeld:</strong> CO202500009600 | 24-9-2025 | a.s.r. Zorg | 202500009600 | € 25,00
+                    </p>
+                    <textarea id="correctie-facturen-data" placeholder="CO202500009600	24-9-2025	a.s.r. Zorg	202500009600	€ 25,00
+CO202500009601	25-9-2025	CZ Zorgverzekeringen	202500009601	€ -10,00
+CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processCorrectieFacturen()" class="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
+                    Correctie Facturen Verwerken
+                </button>
+            </div>
+
             <!-- Status Display -->
             <div id="processing-status" class="mt-4"></div>
         </div>
@@ -312,7 +380,7 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
             
             <!-- Beheer Tabs -->
             <div class="border-b border-gray-200 mb-6">
-                <nav class="-mb-px flex space-x-8">
+                <nav class="-mb-px flex flex-wrap gap-2 sm:space-x-4">
                     <button onclick="setBeheerTab('declaraties')" id="beheer-tab-declaraties" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏥 Declaraties (<span id="declaraties-count">0</span>)
                     </button>
@@ -320,7 +388,16 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                         💸 Vaste Kosten (<span id="vaste-kosten-count">0</span>)
                     </button>
                     <button onclick="setBeheerTab('verzekeraars')" id="beheer-tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
-                        🏥 Zorgverzekeraars (<span id="verzekeraars-count">0</span>)
+                        🏥 Verzekeraars (<span id="verzekeraars-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('credit-facturen')" id="beheer-tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔄 Credit Facturen (<span id="credit-facturen-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('credit-declaraties')" id="beheer-tab-credit-declaraties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        ↩️ Credit Declaraties (<span id="credit-declaraties-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('correctie-facturen')" id="beheer-tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔧 Correcties (<span id="correctie-facturen-count">0</span>)
                     </button>
                 </nav>
             </div>
@@ -427,6 +504,106 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                     </div>
                 </div>
             </div>
+
+            <!-- Credit Facturen Beheer (Particulieren) -->
+            <div id="beheer-credit-facturen" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Credit Facturen (Particulieren)
+                    </h4>
+                    <button onclick="deleteAllCreditFacturen()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-credit-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen credit facturen geïmporteerd
+                    </div>
+                </div>
+            </div>
+
+            <!-- Credit Declaraties Beheer (Verzekeraars) -->
+            <div id="beheer-credit-declaraties" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Credit Declaraties (Verzekeraars)
+                    </h4>
+                    <button onclick="deleteAllCreditDeclaraties()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Originele Factuur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Match</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-declaraties-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-credit-declaraties" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen credit declaraties geïmporteerd
+                    </div>
+                </div>
+            </div>
+
+            <!-- Correctie Facturen Beheer (Verzekeraars) -->
+            <div id="beheer-correctie-facturen" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Correctie Facturen (Verzekeraars)
+                    </h4>
+                    <button onclick="deleteAllCorrectieFacturen()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Originele Factuur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Match</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="correctie-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-correctie-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen correctie facturen geïmporteerd
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Edit Modal -->
@@ -462,6 +639,12 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
         let declaraties = [];
         let vasteKosten = [];
         let customVerzekeraars = []; // Custom verzekeraars overschrijven standaard
+        
+        // Credit en correctie data
+        let creditFacturen = []; // Voor particulieren: factuur, datum, debiteur, bedrag
+        let creditDeclaraties = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
+        let correctieFacturen = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
+        
         let activeTab = 'declaraties';
         let activeBeheerTab = 'declaraties';
         let editingItem = null;
@@ -744,6 +927,217 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
             }
         }
 
+        // === CREDIT EN CORRECTIE VERWERKING FUNCTIES ===
+
+        // Verwerk credit facturen (particulieren)
+        function processCreditFacturen() {
+            const data = document.getElementById('credit-facturen-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen credit facturen data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Credit facturen aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 4) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const debiteur = columns[2]?.trim();
+                            const bedragStr = columns[3]?.trim();
+                            
+                            if (factuur && datum && debiteur && bedragStr) {
+                                // Parse bedrag
+                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                
+                                if (!isNaN(bedrag) && bedrag > 0) {
+                                    parsed.push({
+                                        factuur,
+                                        datum,
+                                        debiteur,
+                                        bedrag: Math.abs(bedrag) // Altijd positief voor credits
+                                    });
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan credit facturen array
+                creditFacturen.push(...parsed);
+                
+                showStatus(`✅ ${parsed.length} credit facturen verwerkt! Deze worden afgetrokken van de cashflow.`, 'success');
+                document.getElementById('credit-facturen-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken credit facturen:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
+        // Verwerk credit declaraties (verzekeraars)
+        function processCreditDeclaraties() {
+            const data = document.getElementById('credit-declaraties-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen credit declaraties data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Credit declaraties aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                let matchedCount = 0;
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 5) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const verzekeraar = columns[2]?.trim();
+                            const origineelFactuur = columns[3]?.trim();
+                            const bedragStr = columns[4]?.trim();
+                            
+                            if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
+                                // Parse bedrag
+                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                
+                                if (!isNaN(bedrag) && bedrag > 0) {
+                                    const creditDeclaratie = {
+                                        factuur,
+                                        datum,
+                                        verzekeraar,
+                                        origineelFactuur,
+                                        bedrag: Math.abs(bedrag), // Altijd positief voor credits
+                                        matched: false,
+                                        matchedDeclaratieIndex: -1
+                                    };
+                                    
+                                    // Zoek originele declaratie om te matchen
+                                    const matchIndex = declaraties.findIndex(decl => 
+                                        decl.factuurnummer === origineelFactuur
+                                    );
+                                    
+                                    if (matchIndex >= 0) {
+                                        creditDeclaratie.matched = true;
+                                        creditDeclaratie.matchedDeclaratieIndex = matchIndex;
+                                        matchedCount++;
+                                        
+                                        // Verlaag het bedrag van de originele declaratie
+                                        declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag - bedrag);
+                                        console.log(`🔄 Credit toegepast: ${origineelFactuur} verlaagd met €${bedrag}`);
+                                    }
+                                    
+                                    parsed.push(creditDeclaratie);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan credit declaraties array
+                creditDeclaraties.push(...parsed);
+                
+                showStatus(`✅ ${parsed.length} credit declaraties verwerkt! ${matchedCount} gematcht en toegepast.`, 'success');
+                document.getElementById('credit-declaraties-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken credit declaraties:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
+        // Verwerk correctie facturen (verzekeraars)
+        function processCorrectieFacturen() {
+            const data = document.getElementById('correctie-facturen-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen correctie facturen data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Correctie facturen aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                let matchedCount = 0;
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 5) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const verzekeraar = columns[2]?.trim();
+                            const origineelFactuur = columns[3]?.trim();
+                            const bedragStr = columns[4]?.trim();
+                            
+                            if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
+                                // Parse bedrag (kan positief of negatief zijn)
+                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                
+                                if (!isNaN(bedrag) && bedrag !== 0) {
+                                    const correctieFactuur = {
+                                        factuur,
+                                        datum,
+                                        verzekeraar,
+                                        origineelFactuur,
+                                        bedrag,
+                                        matched: false,
+                                        matchedDeclaratieIndex: -1
+                                    };
+                                    
+                                    // Zoek originele declaratie om te matchen
+                                    const matchIndex = declaraties.findIndex(decl => 
+                                        decl.factuurnummer === origineelFactuur
+                                    );
+                                    
+                                    if (matchIndex >= 0) {
+                                        correctieFactuur.matched = true;
+                                        correctieFactuur.matchedDeclaratieIndex = matchIndex;
+                                        matchedCount++;
+                                        
+                                        // Pas correctie toe op de originele declaratie
+                                        declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag + bedrag);
+                                        console.log(`🔧 Correctie toegepast: ${origineelFactuur} aangepast met €${bedrag}`);
+                                    }
+                                    
+                                    parsed.push(correctieFactuur);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan correctie facturen array
+                correctieFacturen.push(...parsed);
+                
+                showStatus(`✅ ${parsed.length} correctie facturen verwerkt! ${matchedCount} gematcht en toegepast.`, 'success');
+                document.getElementById('correctie-facturen-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken correctie facturen:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
         // Load demo data
         function loadDemoData() {
             // Demo declaraties voor 2025 (met exacte verzekeraars namen zoals in echte data)
@@ -975,6 +1369,13 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                     }
                 });
                 
+                // Check credit facturen (particulieren) - deze verlagen de inkomsten
+                creditFacturen.forEach(credit => {
+                    if (credit.datum === dagStr) {
+                        dagUitgaven += credit.bedrag; // Credit facturen tellen als uitgave
+                    }
+                });
+                
                 lopendSaldo += dagInkomsten - dagUitgaven;
                 
                 // Voeg alle dagen toe (toon meer bewegingen)
@@ -1078,6 +1479,9 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
             updateDeclaratiesTable();
             updateVasteKostenTable();
             updateVerzekeraarsTable();
+            updateCreditFacturenTable();
+            updateCreditDeclaratiesTable();
+            updateCorrectieFacturenTable();
             updateCounts();
         }
 
@@ -1086,6 +1490,9 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
             document.getElementById('declaraties-count').textContent = declaraties.length;
             document.getElementById('vaste-kosten-count').textContent = vasteKosten.length;
             document.getElementById('verzekeraars-count').textContent = customVerzekeraars.length;
+            document.getElementById('credit-facturen-count').textContent = creditFacturen.length;
+            document.getElementById('credit-declaraties-count').textContent = creditDeclaraties.length;
+            document.getElementById('correctie-facturen-count').textContent = correctieFacturen.length;
         }
 
         // Update declaraties table
@@ -1304,6 +1711,110 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                     dag,
                     categorie
                 };
+                
+            } else if (editingType === 'credit-factuur') {
+                const factuur = document.getElementById('edit-factuur').value;
+                const datum = document.getElementById('edit-datum').value;
+                const debiteur = document.getElementById('edit-debiteur').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                
+                if (!factuur || !datum || !debiteur || !bedrag || bedrag <= 0) {
+                    alert('Vul alle velden correct in! Bedrag moet positief zijn.');
+                    return;
+                }
+                
+                creditFacturen[editingItem] = {
+                    factuur,
+                    datum,
+                    debiteur,
+                    bedrag: Math.abs(bedrag) // Altijd positief voor credits
+                };
+                
+            } else if (editingType === 'credit-declaratie') {
+                const factuur = document.getElementById('edit-factuur').value;
+                const datum = document.getElementById('edit-datum').value;
+                const verzekeraar = document.getElementById('edit-verzekeraar').value;
+                const origineelFactuur = document.getElementById('edit-origineel-factuur').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                
+                if (!factuur || !datum || !verzekeraar || !origineelFactuur || !bedrag || bedrag <= 0) {
+                    alert('Vul alle velden correct in! Bedrag moet positief zijn.');
+                    return;
+                }
+                
+                const oldCredit = creditDeclaraties[editingItem];
+                
+                // Herstel oude matching als die bestond
+                if (oldCredit.matched && oldCredit.matchedDeclaratieIndex >= 0) {
+                    declaraties[oldCredit.matchedDeclaratieIndex].bedrag += oldCredit.bedrag;
+                }
+                
+                // Maak nieuwe credit declaratie
+                const newCredit = {
+                    factuur,
+                    datum,
+                    verzekeraar,
+                    origineelFactuur,
+                    bedrag: Math.abs(bedrag),
+                    matched: false,
+                    matchedDeclaratieIndex: -1
+                };
+                
+                // Zoek nieuwe match
+                const matchIndex = declaraties.findIndex(decl => 
+                    decl.factuurnummer === origineelFactuur
+                );
+                
+                if (matchIndex >= 0) {
+                    newCredit.matched = true;
+                    newCredit.matchedDeclaratieIndex = matchIndex;
+                    declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag - newCredit.bedrag);
+                }
+                
+                creditDeclaraties[editingItem] = newCredit;
+                
+            } else if (editingType === 'correctie-factuur') {
+                const factuur = document.getElementById('edit-factuur').value;
+                const datum = document.getElementById('edit-datum').value;
+                const verzekeraar = document.getElementById('edit-verzekeraar').value;
+                const origineelFactuur = document.getElementById('edit-origineel-factuur').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                
+                if (!factuur || !datum || !verzekeraar || !origineelFactuur || isNaN(bedrag) || bedrag === 0) {
+                    alert('Vul alle velden correct in! Bedrag mag niet 0 zijn.');
+                    return;
+                }
+                
+                const oldCorrectie = correctieFacturen[editingItem];
+                
+                // Herstel oude matching als die bestond
+                if (oldCorrectie.matched && oldCorrectie.matchedDeclaratieIndex >= 0) {
+                    declaraties[oldCorrectie.matchedDeclaratieIndex].bedrag -= oldCorrectie.bedrag;
+                }
+                
+                // Maak nieuwe correctie factuur
+                const newCorrectie = {
+                    factuur,
+                    datum,
+                    verzekeraar,
+                    origineelFactuur,
+                    bedrag,
+                    matched: false,
+                    matchedDeclaratieIndex: -1
+                };
+                
+                // Zoek nieuwe match
+                const matchIndex = declaraties.findIndex(decl => 
+                    decl.factuurnummer === origineelFactuur
+                );
+                
+                if (matchIndex >= 0) {
+                    newCorrectie.matched = true;
+                    newCorrectie.matchedDeclaratieIndex = matchIndex;
+                    declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag + newCorrectie.bedrag);
+                }
+                
+                correctieFacturen[editingItem] = newCorrectie;
             }
             
             closeEditModal();
@@ -1451,6 +1962,327 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                 updatePrognose();
                 showStatus('✅ Alle zorgverzekeraars verwijderd! Standaard termijnen worden gebruikt.', 'success');
             }
+        }
+
+        // === CREDIT EN CORRECTIE TABLE UPDATE FUNCTIES ===
+
+        // Update credit facturen table
+        function updateCreditFacturenTable() {
+            const tbody = document.getElementById('credit-facturen-table-body');
+            const noData = document.getElementById('no-credit-facturen');
+            
+            tbody.innerHTML = '';
+            
+            if (creditFacturen.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            creditFacturen.forEach((credit, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${credit.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.datum}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.debiteur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        -€ ${credit.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editCreditFactuur(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteCreditFactuur(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update credit declaraties table
+        function updateCreditDeclaratiesTable() {
+            const tbody = document.getElementById('credit-declaraties-table-body');
+            const noData = document.getElementById('no-credit-declaraties');
+            
+            tbody.innerHTML = '';
+            
+            if (creditDeclaraties.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            creditDeclaraties.forEach((credit, index) => {
+                const matchStatus = credit.matched 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Gematcht</span>'
+                    : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">❌ Niet gevonden</span>';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${credit.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.datum}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.verzekeraar}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">${credit.origineelFactuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        -€ ${credit.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${matchStatus}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editCreditDeclaratie(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteCreditDeclaratie(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update correctie facturen table
+        function updateCorrectieFacturenTable() {
+            const tbody = document.getElementById('correctie-facturen-table-body');
+            const noData = document.getElementById('no-correctie-facturen');
+            
+            tbody.innerHTML = '';
+            
+            if (correctieFacturen.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            correctieFacturen.forEach((correctie, index) => {
+                const matchStatus = correctie.matched 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Gematcht</span>'
+                    : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">❌ Niet gevonden</span>';
+                
+                const bedragClass = correctie.bedrag >= 0 ? 'text-green-600' : 'text-red-600';
+                const bedragPrefix = correctie.bedrag >= 0 ? '+' : '';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${correctie.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${correctie.datum}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${correctie.verzekeraar}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">${correctie.origineelFactuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium ${bedragClass}">
+                        ${bedragPrefix}€ ${correctie.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${matchStatus}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editCorrectieFactuur(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteCorrectieFactuur(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // === DELETE FUNCTIES VOOR CREDIT/CORRECTIE ===
+
+        function deleteCreditFactuur(index) {
+            if (confirm('Weet je zeker dat je deze credit factuur wilt verwijderen?')) {
+                creditFacturen.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+            }
+        }
+
+        function deleteCreditDeclaratie(index) {
+            const credit = creditDeclaraties[index];
+            if (confirm('Weet je zeker dat je deze credit declaratie wilt verwijderen?')) {
+                // Als het gematcht was, herstel het originele bedrag
+                if (credit.matched && credit.matchedDeclaratieIndex >= 0) {
+                    declaraties[credit.matchedDeclaratieIndex].bedrag += credit.bedrag;
+                }
+                creditDeclaraties.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+            }
+        }
+
+        function deleteCorrectieFactuur(index) {
+            const correctie = correctieFacturen[index];
+            if (confirm('Weet je zeker dat je deze correctie factuur wilt verwijderen?')) {
+                // Als het gematcht was, herstel het originele bedrag
+                if (correctie.matched && correctie.matchedDeclaratieIndex >= 0) {
+                    declaraties[correctie.matchedDeclaratieIndex].bedrag -= correctie.bedrag;
+                }
+                correctieFacturen.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+            }
+        }
+
+        function deleteAllCreditFacturen() {
+            if (confirm(`Weet je zeker dat je alle ${creditFacturen.length} credit facturen wilt verwijderen?`)) {
+                creditFacturen = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle credit facturen verwijderd!', 'success');
+            }
+        }
+
+        function deleteAllCreditDeclaraties() {
+            if (confirm(`Weet je zeker dat je alle ${creditDeclaraties.length} credit declaraties wilt verwijderen?`)) {
+                // Herstel alle gematcht bedragen
+                creditDeclaraties.forEach(credit => {
+                    if (credit.matched && credit.matchedDeclaratieIndex >= 0) {
+                        declaraties[credit.matchedDeclaratieIndex].bedrag += credit.bedrag;
+                    }
+                });
+                creditDeclaraties = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle credit declaraties verwijderd en originele bedragen hersteld!', 'success');
+            }
+        }
+
+        function deleteAllCorrectieFacturen() {
+            if (confirm(`Weet je zeker dat je alle ${correctieFacturen.length} correctie facturen wilt verwijderen?`)) {
+                // Herstel alle gematcht bedragen
+                correctieFacturen.forEach(correctie => {
+                    if (correctie.matched && correctie.matchedDeclaratieIndex >= 0) {
+                        declaraties[correctie.matchedDeclaratieIndex].bedrag -= correctie.bedrag;
+                    }
+                });
+                correctieFacturen = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle correctie facturen verwijderd en originele bedragen hersteld!', 'success');
+            }
+        }
+
+        // === EDIT FUNCTIES VOOR CREDIT/CORRECTIE ===
+
+        function editCreditFactuur(index) {
+            const credit = creditFacturen[index];
+            editingItem = index;
+            editingType = 'credit-factuur';
+            
+            document.getElementById('edit-modal-title').textContent = 'Credit Factuur Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Factuurnummer</label>
+                        <input type="text" id="edit-factuur" value="${credit.factuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                        <input type="date" id="edit-datum" value="${credit.datum}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Debiteur</label>
+                        <input type="text" id="edit-debiteur" value="${credit.debiteur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€)</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${credit.bedrag}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        function editCreditDeclaratie(index) {
+            const credit = creditDeclaraties[index];
+            editingItem = index;
+            editingType = 'credit-declaratie';
+            
+            document.getElementById('edit-modal-title').textContent = 'Credit Declaratie Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Factuurnummer</label>
+                        <input type="text" id="edit-factuur" value="${credit.factuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                        <input type="date" id="edit-datum" value="${credit.datum}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Verzekeraar</label>
+                        <input type="text" id="edit-verzekeraar" value="${credit.verzekeraar}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Originele Factuur</label>
+                        <input type="text" id="edit-origineel-factuur" value="${credit.origineelFactuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€)</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${credit.bedrag}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <strong>Status:</strong> ${credit.matched ? '✅ Gematcht met originele declaratie' : '❌ Originele declaratie niet gevonden'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        function editCorrectieFactuur(index) {
+            const correctie = correctieFacturen[index];
+            editingItem = index;
+            editingType = 'correctie-factuur';
+            
+            document.getElementById('edit-modal-title').textContent = 'Correctie Factuur Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Factuurnummer</label>
+                        <input type="text" id="edit-factuur" value="${correctie.factuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                        <input type="date" id="edit-datum" value="${correctie.datum}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Verzekeraar</label>
+                        <input type="text" id="edit-verzekeraar" value="${correctie.verzekeraar}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Originele Factuur</label>
+                        <input type="text" id="edit-origineel-factuur" value="${correctie.origineelFactuur}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€) - Positief voor bijboeking, negatief voor aftrek</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${correctie.bedrag}" 
+                            class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <strong>Status:</strong> ${correctie.matched ? '✅ Gematcht met originele declaratie' : '❌ Originele declaratie niet gevonden'}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
         }
 
         // === MATCHING CONTROLE FUNCTIES ===
