@@ -310,14 +310,15 @@ Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:
                     <p class="text-sm text-gray-600 mb-3">
                         📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
                         📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Debiteur | Bedrag<br>
-                        👤 <strong>Debiteur:</strong> Meestal persoonsnamen (bijv. Jan Jansen, Piet Peters)<br>
+                        👤 <strong>Debiteur Format:</strong> "factuurnummer-naam" (bijv. 202200008334-Tilmans, Jules)<br>
+                        ✂️ <strong>Naam Extractie:</strong> Systeem haalt automatisch de naam uit het debiteurveld<br>
                         💰 <strong>Bedrag:</strong> Positief bedrag dat als inkomst wordt verwacht<br>
-                        🔄 <strong>Voorbeeld:</strong> PF202500009600 | 24-9-2025 | Jan Jansen | € 155,27
+                        🔄 <strong>Voorbeeld:</strong> 202200008334 | 8-1-2025 | 202200008334-Tilmans, Jules | € 97,00
                     </p>
-                    <textarea id="particulier-facturen-data" placeholder="PF202500009600	24-9-2025	Jan Jansen	€ 155,27
-PF202500009601	25-9-2025	Piet Peters	€ 89,50
-PF202500009602	26-9-2025	Klaas de Vries	€ 125,00
-PF202500009603	27-9-2025	Maria Bakker	€ 75,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                    <textarea id="particulier-facturen-data" placeholder="202200008334	8-1-2025	202200008334-Tilmans, Jules	€ 97,00
+202200008335	9-1-2025	202200008335-De Vries, Piet	€ 89,50
+202200008336	10-1-2025	202200008336-Jansen, Klaas	€ 125,00
+202200008337	11-1-2025	202200008337-Bakker, Maria	€ 75,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
                 </div>
                 <button onclick="processParticulierFacturen()" class="px-6 py-2 bg-indigo-500 text-white rounded-md hover:bg-indigo-600 transition-colors">
                     Particulier Facturen Verwerken
@@ -1222,14 +1223,25 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                         if (columns.length >= 4) {
                             const factuur = columns[0]?.trim();
                             const datum = columns[1]?.trim();
-                            const debiteur = columns[2]?.trim();
+                            const debiteurVeld = columns[2]?.trim();
                             const bedragStr = columns[3]?.trim();
                             
-                            if (factuur && datum && debiteur && bedragStr) {
+                            if (factuur && datum && debiteurVeld && bedragStr) {
+                                // Extract debiteur name from "factuurnummer-naam" format
+                                let debiteur = debiteurVeld;
+                                if (debiteurVeld.includes('-')) {
+                                    // Split op de eerste '-' en neem alles daarna
+                                    const dashIndex = debiteurVeld.indexOf('-');
+                                    if (dashIndex > 0) {
+                                        debiteur = debiteurVeld.substring(dashIndex + 1).trim();
+                                        console.log(`📝 Debiteur extracted: "${debiteurVeld}" -> "${debiteur}"`);
+                                    }
+                                }
+                                
                                 // Parse bedrag
                                 const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
                                 
-                                if (!isNaN(bedrag) && bedrag > 0) {
+                                if (!isNaN(bedrag) && bedrag > 0 && debiteur) {
                                     // Particuliere facturen krijgen standaard 14 dagen betaaltermijn
                                     const verwachteBetaaldatum = new Date(datum);
                                     verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + 14);
