@@ -1,0 +1,881 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashflow Prognose Dashboard - Nederlandse Versie</title>
+    
+    <!-- Firebase SDK v10 - Modulaire versie -->
+    <script type="module">
+        import { initializeApp } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-app.js';
+        import { getFirestore, collection, addDoc, getDocs, query, orderBy, where } from 'https://www.gstatic.com/firebasejs/10.7.1/firebase-firestore.js';
+        
+        // Firebase configuratie
+        const firebaseConfig = {
+            apiKey: "AIzaSyBrD8YOC6Fcl4CQL5dx7Huexg72fepQKT4",
+            authDomain: "cashflow-dashboard-e7af6.firebaseapp.com",
+            projectId: "cashflow-dashboard-e7af6",
+            storageBucket: "cashflow-dashboard-e7af6.firebasestorage.app",
+            messagingSenderId: "524281462973",
+            appId: "1:524281462973:web:c10b50be1d5b73b4c577d4"
+        };
+        
+        // Firebase initialiseren
+        const app = initializeApp(firebaseConfig);
+        const db = getFirestore(app);
+        
+        // Firebase globaal beschikbaar maken
+        window.firebaseApp = app;
+        window.firebaseDb = db;
+        window.firebaseCollection = collection;
+        window.firebaseAddDoc = addDoc;
+        window.firebaseGetDocs = getDocs;
+        window.firebaseQuery = query;
+        window.firebaseOrderBy = orderBy;
+        window.firebaseWhere = where;
+        
+        console.log('🔥 Firebase Cashflow Prognose succesvol geïnitialiseerd!');
+        
+        // Firebase status tonen in UI
+        document.addEventListener('DOMContentLoaded', () => {
+            const statusElement = document.getElementById('firebase-status');
+            if (statusElement) {
+                statusElement.innerHTML = '<span class="text-green-600 font-bold">🔥 FIREBASE VERBONDEN</span>';
+                statusElement.className = 'text-sm bg-green-50 border border-green-200 rounded px-3 py-1';
+            }
+            
+            // Toon welke collecties er beschikbaar zijn
+            const collectionsInfo = document.getElementById('collections-info');
+            if (collectionsInfo) {
+                collectionsInfo.innerHTML = `
+                    <div class="text-sm text-gray-600 mt-2">
+                        <strong>Beschikbare collecties:</strong><br>
+                        • declaraties (Zorgverzekeraar declaraties)<br>
+                        • facturen (Particuliere facturen)<br>
+                        • correcties (Correcties en credits)<br>
+                        • banktransacties (Bankrekening uittreksel)<br>
+                        • verzekeraars (Betaaltermijnen per verzekeraar)<br>
+                        • debiteuren (Overige debiteuren)<br>
+                        • vaste_kosten (Maandelijkse kosten)
+                    </div>
+                `;
+            }
+        });
+    </script>
+    
+    <!-- React & Dependencies CDN -->
+    <script src="https://unpkg.com/react@18/umd/react.development.js"></script>
+    <script src="https://unpkg.com/react-dom@18/umd/react-dom.development.js"></script>
+    <script src="https://unpkg.com/@babel/standalone/babel.min.js"></script>
+    
+    <!-- Recharts voor grafieken -->
+    <script src="https://unpkg.com/recharts@2.8.0/umd/Recharts.js"></script>
+    
+    <!-- Tailwind CSS -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    
+    <!-- Tailwind config -->
+    <script>
+        tailwind.config = {
+            theme: {
+                extend: {
+                    colors: {
+                        primary: '#3B82F6',
+                        secondary: '#10B981'
+                    }
+                }
+            }
+        }
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Loading indicator -->
+    <div id="loading" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <p class="text-gray-600">Cashflow Prognose Dashboard wordt geladen...</p>
+        </div>
+    </div>
+    
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-xl font-bold text-gray-900">
+                        💰 Cashflow Prognose Dashboard
+                    </h1>
+                    <div class="ml-4">
+                        <div id="firebase-status" class="text-sm bg-yellow-50 border border-yellow-200 rounded px-3 py-1">
+                            <span class="text-yellow-600">🔄 Verbinding maken...</span>
+                        </div>
+                    </div>
+                </div>
+                
+                <div class="flex items-center space-x-4">
+                    <span class="text-sm text-gray-500">Nederlandse Versie</span>
+                    <div class="text-2xl">🇳🇱</div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Introductie sectie -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-6">
+            <h2 class="text-lg font-semibold text-gray-900 mb-3">
+                🎯 Wat Doet Dit Dashboard?
+            </h2>
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 text-sm">
+                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                    <h3 class="font-medium text-blue-900 mb-2">📈 Banksaldo Projectie</h3>
+                    <p class="text-blue-800">
+                        Zie precies wat je banksaldo wordt op elke dag, week of maand gebaseerd op verwachte inkomsten en uitgaven.
+                    </p>
+                </div>
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h3 class="font-medium text-green-900 mb-2">📊 EPD Data Import</h3>
+                    <p class="text-green-800">
+                        Upload declaraties, facturen, correcties en credits uit je EPD om automatisch cashflow te berekenen.
+                    </p>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h3 class="font-medium text-purple-900 mb-2">🏦 Bank Reconciliatie</h3>
+                    <p class="text-purple-800">
+                        Importeer banktransacties om te zien welke facturen al betaald zijn en welke nog openstaan.
+                    </p>
+                </div>
+            </div>
+            
+            <div id="collections-info"></div>
+        </div>
+    </div>
+
+    <!-- React App Container -->
+    <div id="cashflow-app"></div>
+    
+    <!-- Footer -->
+    <footer class="bg-white border-t mt-12">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-6">
+            <div class="text-center text-gray-500 text-sm">
+                <p>🏥 Cashflow Prognose Dashboard - Speciaal voor Nederlandse (Para)medische Praktijken</p>
+                <p class="mt-2">
+                    <strong>Features:</strong> EPD Data Import | Banksaldo Projectie | Firebase Cloud Storage | Nederlandse Interface
+                </p>
+                <div class="mt-3 text-xs space-x-4">
+                    <span>📅 Dag/Week/Maand/Jaar Weergave</span>
+                    <span>💰 Zorgverzekeraar Betaaltermijnen</span>
+                    <span>🏦 Automatische Bankreconciliatie</span>
+                    <span>📊 Real-time Grafieken</span>
+                </div>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Main React Component Script -->
+    <script type="text/babel">
+        const { useState, useMemo, useEffect, useCallback } = React;
+        const { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer, BarChart, Bar, ComposedChart } = Recharts;
+
+        const CashflowPrognoseDashboard = () => {
+            // State voor alle data
+            const [huidigBanksaldo, setHuidigBanksaldo] = useState(2500.00);
+            const [timelineWeergave, setTimelineWeergave] = useState('dag');
+            const [selectedPeriode, setSelectedPeriode] = useState(30);
+            
+            // Data states
+            const [declaraties, setDeclaraties] = useState([]);
+            const [facturen, setFacturen] = useState([]);
+            const [correcties, setCorrecties] = useState([]);
+            const [credits, setCredits] = useState([]);
+            const [banktransacties, setBanktransacties] = useState([]);
+            const [verzekeraars, setVerzekeraars] = useState([]);
+            const [debiteuren, setDebiteuren] = useState([]);
+            const [vasteKosten, setVasteKosten] = useState([]);
+            
+            // Upload states
+            const [activeUploadTab, setActiveUploadTab] = useState('declaraties');
+            const [uploadedData, setUploadedData] = useState('');
+            const [processingStatus, setProcessingStatus] = useState('');
+            const [isLoading, setIsLoading] = useState(false);
+
+            // Standaard verzekeraars met betaaltermijnen
+            const standaardVerzekeraars = [
+                { naam: 'CZ Zorgverzekeringen', betaaltermijn: 30 },
+                { naam: 'VGZ', betaaltermijn: 28 },
+                { naam: 'Achmea', betaaltermijn: 30 },
+                { naam: 'Menzis', betaaltermijn: 35 },
+                { naam: 'DSW', betaaltermijn: 30 },
+                { naam: 'De Friesland', betaaltermijn: 28 },
+                { naam: 'ASR', betaaltermijn: 30 },
+                { naam: 'ONVZ', betaaltermijn: 30 },
+                { naam: 'OHRA', betaaltermijn: 28 },
+                { naam: 'Zilveren Kruis', betaaltermijn: 30 }
+            ];
+
+            // Firebase functies
+            const saveToFirebase = async (collectionName, data) => {
+                try {
+                    console.log(`Opslaan naar ${collectionName}:`, data);
+                    const docRef = await window.firebaseAddDoc(window.firebaseCollection(window.firebaseDb, collectionName), {
+                        ...data,
+                        createdAt: new Date().toISOString()
+                    });
+                    console.log("Document opgeslagen met ID: ", docRef.id);
+                    return { success: true, id: docRef.id };
+                } catch (error) {
+                    console.error('Firebase error:', error);
+                    return { success: false, error: error.message };
+                }
+            };
+
+            const loadFromFirebase = async (collectionName) => {
+                try {
+                    console.log(`Laden uit ${collectionName}`);
+                    const q = window.firebaseQuery(
+                        window.firebaseCollection(window.firebaseDb, collectionName), 
+                        window.firebaseOrderBy("createdAt", "desc")
+                    );
+                    const snapshot = await window.firebaseGetDocs(q);
+                    const data = [];
+                    snapshot.forEach((doc) => {
+                        data.push({ id: doc.id, ...doc.data() });
+                    });
+                    console.log(`${collectionName} geladen:`, data.length, 'items');
+                    return data;
+                } catch (error) {
+                    console.error(`Fout bij laden ${collectionName}:`, error);
+                    return [];
+                }
+            };
+
+            // Helper functions
+            const parseDatum = (dateStr) => {
+                if (!dateStr) return null;
+                
+                const formats = [
+                    /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/,
+                    /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/,
+                    /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{2})$/
+                ];
+                
+                for (let format of formats) {
+                    const match = dateStr.match(format);
+                    if (match) {
+                        let dag, maand, jaar;
+                        if (format === formats[0]) {
+                            [, dag, maand, jaar] = match;
+                        } else if (format === formats[1]) {
+                            [, jaar, maand, dag] = match;
+                        } else {
+                            [, dag, maand, jaar] = match;
+                            jaar = parseInt(jaar) < 50 ? `20${jaar}` : `19${jaar}`;
+                        }
+                        
+                        const date = new Date(parseInt(jaar), parseInt(maand) - 1, parseInt(dag));
+                        if (!isNaN(date.getTime())) {
+                            return date.toISOString().split('T')[0];
+                        }
+                    }
+                }
+                
+                return null;
+            };
+
+            const parseBedrag = (bedragStr) => {
+                if (!bedragStr) return 0;
+                
+                const cleaned = bedragStr.replace(/[€$£¥\s]/g, '');
+                const europeFormat = /^-?\d{1,3}(\.\d{3})*,\d{2}$/.test(cleaned);
+                
+                if (europeFormat) {
+                    const normalized = cleaned.replace(/\./g, '').replace(',', '.');
+                    return parseFloat(normalized) || 0;
+                } else {
+                    const normalized = cleaned.replace(/,/g, '');
+                    return parseFloat(normalized) || 0;
+                }
+            };
+
+            // Data parsers
+            const parseDeclaratiesData = (data) => {
+                const lines = data.trim().split('\n');
+                if (lines.length === 0) return [];
+                
+                const parsed = [];
+                lines.forEach((line, index) => {
+                    if (index === 0 && line.toLowerCase().includes('datum')) return;
+                    
+                    const columns = line.split(/[;\t,]/);
+                    if (columns.length >= 3) {
+                        const datum = parseDatum(columns[0]?.trim());
+                        const verzekeraar = columns[1]?.trim();
+                        const bedrag = parseBedrag(columns[2]?.trim());
+                        const factuurnummer = columns[3]?.trim() || `DECL${Date.now()}${index}`;
+                        const patientNaam = columns[4]?.trim() || '';
+                        
+                        if (datum && verzekeraar && bedrag) {
+                            const verzekeraarmatch = standaardVerzekeraars.find(v => 
+                                verzekeraar.toLowerCase().includes(v.naam.toLowerCase()) ||
+                                v.naam.toLowerCase().includes(verzekeraar.toLowerCase())
+                            );
+                            const betaaltermijn = verzekeraarmatch ? verzekeraarmatch.betaaltermijn : 30;
+                            const verwachteBetaaldatum = new Date(datum);
+                            verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + betaaltermijn);
+                            
+                            parsed.push({
+                                id: `decl_${Date.now()}_${index}`,
+                                datum: datum,
+                                verzekeraar,
+                                bedrag,
+                                factuurnummer,
+                                patientNaam,
+                                status: 'openstaand',
+                                verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0],
+                                type: 'declaratie'
+                            });
+                        }
+                    }
+                });
+                
+                return parsed;
+            };
+
+            const parseVasteKostenData = (data) => {
+                const lines = data.trim().split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (index === 0 && line.toLowerCase().includes('omschrijving')) return;
+                    
+                    const columns = line.split(/[;\t,]/);
+                    if (columns.length >= 3) {
+                        const omschrijving = columns[0]?.trim();
+                        const bedrag = parseBedrag(columns[1]?.trim());
+                        const betaaldag = parseInt(columns[2]?.trim());
+                        const categorie = columns[3]?.trim() || 'Overig';
+                        
+                        if (omschrijving && bedrag && betaaldag > 0 && betaaldag <= 31) {
+                            parsed.push({
+                                id: `vaste_${Date.now()}_${index}`,
+                                omschrijving,
+                                bedrag: Math.abs(bedrag) * -1,
+                                betaaldag,
+                                categorie,
+                                type: 'vaste_kosten'
+                            });
+                        }
+                    }
+                });
+                
+                return parsed;
+            };
+
+            // Cashflow prognose berekening
+            const berekenCashflowPrognose = useMemo(() => {
+                const startDatum = new Date();
+                const eindDatum = new Date();
+                eindDatum.setDate(startDatum.getDate() + selectedPeriode);
+                
+                const prognoseData = [];
+                let lopendSaldo = huidigBanksaldo;
+                
+                for (let d = new Date(startDatum); d <= eindDatum; d.setDate(d.getDate() + 1)) {
+                    const dagStr = d.toISOString().split('T')[0];
+                    let dagInkomsten = 0;
+                    let dagUitgaven = 0;
+                    
+                    // Check declaraties
+                    declaraties.forEach(decl => {
+                        if (decl.verwachteBetaaldatum === dagStr && decl.status === 'openstaand') {
+                            dagInkomsten += decl.bedrag;
+                        }
+                    });
+                    
+                    // Check facturen
+                    facturen.forEach(fact => {
+                        if (fact.verwachteBetaaldatum === dagStr && fact.status === 'openstaand') {
+                            dagInkomsten += fact.bedrag;
+                        }
+                    });
+                    
+                    // Check vaste kosten
+                    const dagVanMaand = d.getDate();
+                    vasteKosten.forEach(vk => {
+                        if (vk.betaaldag === dagVanMaand) {
+                            dagUitgaven += Math.abs(vk.bedrag);
+                        }
+                    });
+                    
+                    const nettoMutatie = dagInkomsten - dagUitgaven;
+                    lopendSaldo += nettoMutatie;
+                    
+                    prognoseData.push({
+                        datum: dagStr,
+                        dagInkomsten,
+                        dagUitgaven,
+                        nettoMutatie,
+                        eindSaldo: lopendSaldo,
+                        formatted: {
+                            datum: d.toLocaleDateString('nl-NL'),
+                            inkomsten: `€ ${dagInkomsten.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`,
+                            uitgaven: `€ ${dagUitgaven.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`,
+                            saldo: `€ ${lopendSaldo.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`
+                        }
+                    });
+                }
+                
+                return prognoseData;
+            }, [declaraties, facturen, vasteKosten, huidigBanksaldo, selectedPeriode]);
+
+            // Data upload handler
+            const handleDataUpload = async () => {
+                if (!uploadedData.trim()) {
+                    setProcessingStatus('⚠️ Geen data ingevoerd om te verwerken');
+                    return;
+                }
+                
+                setIsLoading(true);
+                setProcessingStatus('🔄 Data aan het verwerken...');
+                
+                try {
+                    let parsedData = [];
+                    let targetCollection = '';
+                    let setter = null;
+                    
+                    switch (activeUploadTab) {
+                        case 'declaraties':
+                            parsedData = parseDeclaratiesData(uploadedData);
+                            targetCollection = 'declaraties';
+                            setter = setDeclaraties;
+                            break;
+                        case 'vaste_kosten':
+                            parsedData = parseVasteKostenData(uploadedData);
+                            targetCollection = 'vaste_kosten';
+                            setter = setVasteKosten;
+                            break;
+                        default:
+                            throw new Error('Upload type nog niet geïmplementeerd in demo');
+                    }
+                    
+                    if (parsedData.length === 0) {
+                        setProcessingStatus('⚠️ Geen geldige data gevonden in de upload');
+                        setIsLoading(false);
+                        return;
+                    }
+                    
+                    // Save to Firebase
+                    let savedCount = 0;
+                    for (const item of parsedData) {
+                        const result = await saveToFirebase(targetCollection, item);
+                        if (result.success) savedCount++;
+                    }
+                    
+                    // Update local state
+                    if (setter) {
+                        setter(prev => [...prev, ...parsedData]);
+                    }
+                    
+                    setProcessingStatus(`✅ ${savedCount}/${parsedData.length} items succesvol verwerkt en opgeslagen in Firebase`);
+                    setUploadedData('');
+                    
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    setProcessingStatus(`❌ Fout bij verwerken: ${error.message}`);
+                }
+                
+                setIsLoading(false);
+            };
+
+            // Load demo data
+            const loadDemoData = () => {
+                // Demo declaraties
+                const demoDeclaraties = [
+                    {
+                        id: 'demo_decl_1',
+                        datum: new Date().toISOString().split('T')[0],
+                        verzekeraar: 'CZ Zorgverzekeringen',
+                        bedrag: 89.50,
+                        factuurnummer: 'DEMO2024001',
+                        patientNaam: 'Demo Patiënt 1',
+                        status: 'openstaand',
+                        verwachteBetaaldatum: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        type: 'declaratie'
+                    },
+                    {
+                        id: 'demo_decl_2',
+                        datum: new Date().toISOString().split('T')[0],
+                        verzekeraar: 'VGZ',
+                        bedrag: 125.00,
+                        factuurnummer: 'DEMO2024002',
+                        patientNaam: 'Demo Patiënt 2',
+                        status: 'openstaand',
+                        verwachteBetaaldatum: new Date(Date.now() + 28 * 24 * 60 * 60 * 1000).toISOString().split('T')[0],
+                        type: 'declaratie'
+                    }
+                ];
+                
+                // Demo vaste kosten
+                const demoVasteKosten = [
+                    {
+                        id: 'demo_vaste_1',
+                        omschrijving: 'Huur praktijkruimte',
+                        bedrag: -850.00,
+                        betaaldag: 1,
+                        categorie: 'Huisvesting',
+                        type: 'vaste_kosten'
+                    },
+                    {
+                        id: 'demo_vaste_2',
+                        omschrijving: 'Verzekering',
+                        bedrag: -125.00,
+                        betaaldag: 15,
+                        categorie: 'Verzekeringen',
+                        type: 'vaste_kosten'
+                    },
+                    {
+                        id: 'demo_vaste_3',
+                        omschrijving: 'Software licentie EPD',
+                        bedrag: -49.95,
+                        betaaldag: 28,
+                        categorie: 'IT',
+                        type: 'vaste_kosten'
+                    }
+                ];
+                
+                setDeclaraties(demoDeclaraties);
+                setVasteKosten(demoVasteKosten);
+                setProcessingStatus('✅ Demo data geladen!');
+            };
+
+            // Load data on mount
+            useEffect(() => {
+                const loadAllData = async () => {
+                    try {
+                        const [declaratiesData, vasteKostenData] = await Promise.all([
+                            loadFromFirebase('declaraties'),
+                            loadFromFirebase('vaste_kosten')
+                        ]);
+                        
+                        setDeclaraties(declaratiesData);
+                        setVasteKosten(vasteKostenData);
+                        
+                        // Als er geen data is, laad demo data
+                        if (declaratiesData.length === 0 && vasteKostenData.length === 0) {
+                            loadDemoData();
+                        }
+                        
+                    } catch (error) {
+                        console.error('Error loading data:', error);
+                        loadDemoData(); // Fallback naar demo data
+                    }
+                };
+                
+                // Wacht tot Firebase geladen is
+                if (window.firebaseDb) {
+                    loadAllData();
+                } else {
+                    // Probeer later opnieuw
+                    setTimeout(loadAllData, 1000);
+                }
+            }, []);
+
+            // Upload tab configuraties (beperkt voor demo)
+            const uploadTabs = {
+                declaraties: {
+                    label: 'EPD Declaraties',
+                    placeholder: `Plak declaratie data in dit formaat:
+Datum;Verzekeraar;Bedrag;Factuurnummer;Patient
+01-01-2024;CZ Zorgverzekeringen;89.50;2024001;Jan Jansen
+02-01-2024;VGZ;125.00;2024002;Marie Pieters`,
+                    help: 'Upload declaraties naar zorgverzekeraars uit je EPD export'
+                },
+                vaste_kosten: {
+                    label: 'Vaste Kosten',
+                    placeholder: `Plak vaste kosten data in dit formaat:
+Omschrijving;Bedrag;Betaaldag;Categorie
+Huur praktijkruimte;850.00;1;Huisvesting
+Verzekering;125.00;15;Verzekeringen
+Software licentie;49.95;28;IT`,
+                    help: 'Upload maandelijks terugkerende kosten met betaaldagen'
+                }
+            };
+
+            return (
+                <div className="min-h-screen bg-gray-50 p-4">
+                    <div className="max-w-7xl mx-auto">
+                        {/* Banksaldo instelling */}
+                        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                            <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4">
+                                <div>
+                                    <h2 className="text-xl font-semibold text-gray-900">💰 Cashflow Prognose</h2>
+                                    <p className="text-gray-600 mt-1">Zie je toekomstige banksaldo op basis van verwachte in- en uitgaven</p>
+                                </div>
+                                
+                                <div className="flex flex-col sm:flex-row gap-3 items-center">
+                                    <label className="text-sm font-medium text-gray-700 whitespace-nowrap">
+                                        Huidig Banksaldo:
+                                    </label>
+                                    <input
+                                        type="number"
+                                        step="0.01"
+                                        value={huidigBanksaldo}
+                                        onChange={(e) => setHuidigBanksaldo(parseFloat(e.target.value) || 0)}
+                                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right font-medium w-32"
+                                        placeholder="0.00"
+                                    />
+                                    <span className="text-sm text-gray-500">EUR</span>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Timeline Controls */}
+                        <div className="bg-white rounded-lg shadow-sm p-4 mb-6">
+                            <div className="flex flex-col sm:flex-row gap-4 items-center justify-between">
+                                <div className="flex gap-2">
+                                    {[
+                                        { key: 'dag', label: 'Per Dag' },
+                                        { key: 'week', label: 'Per Week' },
+                                        { key: 'maand', label: 'Per Maand' }
+                                    ].map(({ key, label }) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setTimelineWeergave(key)}
+                                            className={`px-4 py-2 rounded-md font-medium transition-colors ${
+                                                timelineWeergave === key
+                                                    ? 'bg-blue-500 text-white'
+                                                    : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
+                                            }`}
+                                        >
+                                            {label}
+                                        </button>
+                                    ))}
+                                </div>
+                                
+                                <div className="flex items-center gap-3">
+                                    <label className="text-sm font-medium text-gray-700">
+                                        Periode:
+                                    </label>
+                                    <select
+                                        value={selectedPeriode}
+                                        onChange={(e) => setSelectedPeriode(parseInt(e.target.value))}
+                                        className="px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                                    >
+                                        <option value={7}>7 dagen</option>
+                                        <option value={14}>14 dagen</option>
+                                        <option value={30}>30 dagen</option>
+                                        <option value={60}>60 dagen</option>
+                                        <option value={90}>90 dagen</option>
+                                    </select>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Cashflow Grafiek */}
+                        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">
+                                📈 Banksaldo Projectie - Komende {selectedPeriode} Dagen
+                            </h3>
+                            
+                            <div className="h-96">
+                                <ResponsiveContainer width="100%" height="100%">
+                                    <ComposedChart data={berekenCashflowPrognose}>
+                                        <CartesianGrid strokeDasharray="3 3" />
+                                        <XAxis 
+                                            dataKey="formatted.datum"
+                                            angle={-45}
+                                            textAnchor="end"
+                                            height={100}
+                                            interval="preserveStartEnd"
+                                        />
+                                        <YAxis 
+                                            tickFormatter={(value) => `€ ${value.toLocaleString('nl-NL')}`}
+                                        />
+                                        <Tooltip 
+                                            labelFormatter={(label) => `Datum: ${label}`}
+                                            formatter={(value, name) => {
+                                                const formattedValue = `€ ${value.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`;
+                                                return [formattedValue, name];
+                                            }}
+                                        />
+                                        <Legend />
+                                        
+                                        <Bar 
+                                            dataKey="dagInkomsten" 
+                                            fill="#10B981" 
+                                            name="Inkomsten"
+                                            opacity={0.8}
+                                        />
+                                        <Bar 
+                                            dataKey="dagUitgaven" 
+                                            fill="#EF4444" 
+                                            name="Uitgaven"
+                                            opacity={0.8}
+                                        />
+                                        <Line 
+                                            type="monotone" 
+                                            dataKey="eindSaldo" 
+                                            stroke="#3B82F6" 
+                                            strokeWidth={3}
+                                            name="Banksaldo"
+                                            dot={{ fill: '#3B82F6', strokeWidth: 2, r: 4 }}
+                                        />
+                                    </ComposedChart>
+                                </ResponsiveContainer>
+                            </div>
+                            
+                            {/* Saldo waarschuwingen */}
+                            {berekenCashflowPrognose.some(item => item.eindSaldo < 0) && (
+                                <div className="mt-4 p-4 bg-red-50 border border-red-200 rounded-md">
+                                    <h4 className="text-red-800 font-medium">⚠️ Negatief Saldo Verwacht</h4>
+                                    <p className="text-red-700 text-sm mt-1">
+                                        Je banksaldo wordt negatief op bepaalde dagen. Overweeg om betalingstermijnen te verkorten of uitgaven uit te stellen.
+                                    </p>
+                                </div>
+                            )}
+                        </div>
+
+                        {/* Data Upload Sectie */}
+                        <div className="bg-white rounded-lg shadow-sm p-6 mb-6">
+                            <h3 className="text-lg font-semibold text-gray-900 mb-4">📊 Data Upload & Management</h3>
+                            
+                            {/* Demo knop */}
+                            <div className="mb-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                                <div className="flex justify-between items-center">
+                                    <div>
+                                        <h4 className="font-medium text-blue-900">🎯 Demo Modus</h4>
+                                        <p className="text-sm text-blue-800">Probeer de applicatie met voorbeelddata</p>
+                                    </div>
+                                    <button
+                                        onClick={loadDemoData}
+                                        className="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors"
+                                    >
+                                        Demo Data Laden
+                                    </button>
+                                </div>
+                            </div>
+                            
+                            {/* Upload Tabs */}
+                            <div className="border-b border-gray-200 mb-4">
+                                <nav className="-mb-px flex space-x-8">
+                                    {Object.entries(uploadTabs).map(([key, config]) => (
+                                        <button
+                                            key={key}
+                                            onClick={() => setActiveUploadTab(key)}
+                                            className={`whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm ${
+                                                activeUploadTab === key
+                                                    ? 'border-blue-500 text-blue-600'
+                                                    : 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300'
+                                            }`}
+                                        >
+                                            {config.label}
+                                        </button>
+                                    ))}
+                                </nav>
+                            </div>
+                            
+                            {/* Upload Interface */}
+                            <div className="space-y-4">
+                                <div>
+                                    <label className="block text-sm font-medium text-gray-700 mb-2">
+                                        {uploadTabs[activeUploadTab].help}
+                                    </label>
+                                    <textarea
+                                        value={uploadedData}
+                                        onChange={(e) => setUploadedData(e.target.value)}
+                                        placeholder={uploadTabs[activeUploadTab].placeholder}
+                                        className="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"
+                                        disabled={isLoading}
+                                    />
+                                </div>
+                                
+                                <div className="flex items-center gap-4">
+                                    <button
+                                        onClick={handleDataUpload}
+                                        disabled={!uploadedData.trim() || isLoading}
+                                        className={`px-6 py-2 rounded-md font-medium ${
+                                            uploadedData.trim() && !isLoading
+                                                ? 'bg-blue-500 text-white hover:bg-blue-600'
+                                                : 'bg-gray-300 text-gray-500 cursor-not-allowed'
+                                        }`}
+                                    >
+                                        {isLoading ? '🔄 Verwerken...' : 'Data Verwerken'}
+                                    </button>
+                                    
+                                    {processingStatus && (
+                                        <div className="text-sm font-medium">
+                                            {processingStatus}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Data Overzichten */}
+                        <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+                            {/* Openstaande Declaraties */}
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                                    🏥 Openstaande Declaraties ({declaraties.filter(d => d.status === 'openstaand').length})
+                                </h4>
+                                <div className="space-y-3 max-h-64 overflow-y-auto">
+                                    {declaraties.filter(d => d.status === 'openstaand').slice(0, 10).map(decl => (
+                                        <div key={decl.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div>
+                                                <div className="font-medium">{decl.verzekeraar}</div>
+                                                <div className="text-sm text-gray-600">{decl.factuurnummer} - {decl.patientNaam}</div>
+                                                <div className="text-xs text-blue-600">Verwacht: {new Date(decl.verwachteBetaaldatum).toLocaleDateString('nl-NL')}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-semibold text-green-600">
+                                                    € {decl.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {declaraties.filter(d => d.status === 'openstaand').length === 0 && (
+                                        <p className="text-gray-500 text-center py-4">Geen openstaande declaraties</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            {/* Vaste Kosten */}
+                            <div className="bg-white rounded-lg shadow-sm p-6">
+                                <h4 className="text-md font-semibold text-gray-900 mb-4">
+                                    💸 Vaste Kosten Deze Maand ({vasteKosten.length})
+                                </h4>
+                                <div className="space-y-3 max-h-64 overflow-y-auto">
+                                    {vasteKosten.map(vk => (
+                                        <div key={vk.id} className="flex justify-between items-center p-3 bg-gray-50 rounded-md">
+                                            <div>
+                                                <div className="font-medium">{vk.omschrijving}</div>
+                                                <div className="text-sm text-gray-600">{vk.categorie}</div>
+                                                <div className="text-xs text-red-600">Betaaldag: {vk.betaaldag}</div>
+                                            </div>
+                                            <div className="text-right">
+                                                <div className="font-semibold text-red-600">
+                                                    € {Math.abs(vk.bedrag).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                                                </div>
+                                            </div>
+                                        </div>
+                                    ))}
+                                    {vasteKosten.length === 0 && (
+                                        <p className="text-gray-500 text-center py-4">Geen vaste kosten geconfigureerd</p>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            );
+        };
+
+        // Render de app
+        const root = ReactDOM.createRoot(document.getElementById('cashflow-app'));
+        root.render(React.createElement(CashflowPrognoseDashboard));
+        
+        // Verberg loading indicator
+        document.getElementById('loading').style.display = 'none';
+    </script>
+</body>
+</html>

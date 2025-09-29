@@ -1,0 +1,1528 @@
+<!DOCTYPE html>
+<html lang="nl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Cashflow Prognose Dashboard - Eenvoudige Versie</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+        console.log('📝 Cashflow Dashboard wordt geladen...');
+        
+        // Eenvoudige error handling
+        window.onerror = function(msg, url, lineNo, columnNo, error) {
+            console.error('JavaScript Error:', msg, 'at', url, ':', lineNo);
+            document.getElementById('error-display').innerHTML = `
+                <div class="bg-red-50 border border-red-200 rounded-md p-4 m-4">
+                    <h3 class="text-red-800 font-bold">⚠️ JavaScript Fout</h3>
+                    <p class="text-red-700 text-sm mt-1">${msg}</p>
+                    <p class="text-red-600 text-xs mt-1">Lijn: ${lineNo}, Kolom: ${columnNo}</p>
+                </div>
+            `;
+            return false;
+        };
+    </script>
+</head>
+<body class="bg-gray-50">
+    <!-- Error Display -->
+    <div id="error-display"></div>
+
+    <!-- Loading Indicator -->
+    <div id="loading-screen" class="fixed inset-0 bg-white bg-opacity-90 flex items-center justify-center z-50">
+        <div class="text-center">
+            <div class="animate-spin rounded-full h-16 w-16 border-b-2 border-blue-500 mx-auto mb-4"></div>
+            <h2 class="text-xl font-semibold text-gray-900 mb-2">💰 Cashflow Dashboard</h2>
+            <p class="text-gray-600">Even geduld, applicatie wordt geladen...</p>
+            <div id="loading-status" class="mt-4 text-sm text-blue-600"></div>
+        </div>
+    </div>
+
+    <!-- Header -->
+    <div class="bg-white shadow-sm border-b">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+            <div class="flex justify-between items-center h-16">
+                <div class="flex items-center">
+                    <h1 class="text-2xl font-bold text-gray-900">
+                        💰 Cashflow Prognose Dashboard
+                    </h1>
+                </div>
+                <div class="flex items-center space-x-4">
+                    <div id="status-indicator" class="text-sm bg-yellow-50 border border-yellow-200 rounded px-3 py-1">
+                        <span class="text-yellow-600">🔄 Initialiseren...</span>
+                    </div>
+                    <span class="text-sm text-gray-500">🇳🇱 Nederlandse Versie</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Main Content -->
+    <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
+        
+        <!-- Introductie -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <div class="text-center">
+                <h2 class="text-2xl font-bold text-gray-900 mb-4">🎯 Banksaldo Projectie Dashboard</h2>
+                <p class="text-lg text-gray-600 mb-6">
+                    Zie precies wat je banksaldo wordt op elke dag, gebaseerd op je EPD data en vaste kosten
+                </p>
+                
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 text-left">
+                    <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-blue-900 mb-2">📈 Dagelijkse Prognose</h3>
+                        <p class="text-blue-800 text-sm">
+                            Upload je EPD declaraties en zie wanneer ze betaald worden. Plan je cashflow tot 1 jaar vooruit.
+                        </p>
+                    </div>
+                    <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-green-900 mb-2">💸 Vaste Kosten</h3>
+                        <p class="text-green-800 text-sm">
+                            Voer je maandelijkse kosten in met betaaldagen. Huur op de 1e, verzekering op de 15e, etc.
+                        </p>
+                    </div>
+                    <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                        <h3 class="font-semibold text-purple-900 mb-2">🏦 Bank Reconciliatie</h3>
+                        <p class="text-purple-800 text-sm">
+                            Import banktransacties om te zien welke declaraties al betaald zijn.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Banksaldo Instelling -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">🏦 Banksaldo per 1 Januari 2025</h3>
+            <div class="flex flex-col sm:flex-row items-center gap-4">
+                <label class="text-sm font-medium text-gray-700">
+                    Voer je banksaldo per 1-1-2025 in:
+                </label>
+                <div class="flex items-center gap-2">
+                    <span class="text-gray-500">€</span>
+                    <input 
+                        type="number" 
+                        id="banksaldo-input"
+                        step="0.01" 
+                        value="2500.00"
+                        class="px-4 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-right font-medium w-32"
+                        onchange="updateBanksaldo(this.value)"
+                    >
+                </div>
+                <div id="saldo-display" class="text-lg font-bold text-green-600">
+                    € 2.500,00
+                </div>
+                <div class="text-sm text-blue-600 font-medium">
+                    📅 Startdatum: 1 januari 2025
+                </div>
+            </div>
+        </div>
+
+        <!-- Prognose Instellingen -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">📅 Prognose Instellingen</h3>
+            
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                <!-- Startdatum Kiezer -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        🗺 Startdatum Prognose:
+                    </label>
+                    <input 
+                        type="date" 
+                        id="prognose-startdatum-input"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                        onchange="updateStartdatum(this.value)"
+                    >
+                    <div class="mt-1 text-xs text-gray-500">
+                        💡 Kies een datum om vanaf te starten (kan in verleden)
+                    </div>
+                </div>
+                
+                <!-- Periode Kiezer -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        🗺 Periode Vooruit:
+                    </label>
+                    <select
+                        id="periode-select"
+                        onchange="updatePeriode(this.value)"
+                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500"
+                    >
+                        <option value="7">7 dagen</option>
+                        <option value="14">14 dagen</option>
+                        <option value="30" selected>30 dagen</option>
+                        <option value="60">60 dagen</option>
+                        <option value="90">90 dagen</option>
+                        <option value="180">6 maanden</option>
+                        <option value="365">1 jaar</option>
+                    </select>
+                    <div class="mt-1 text-xs text-gray-500">
+                        📆 Hoeveel dagen vooruit kijken
+                    </div>
+                </div>
+                
+                <!-- Quick Actions -->
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-2">
+                        ⚡ Snelle Acties:
+                    </label>
+                    <div class="flex flex-col gap-2">
+                        <button onclick="setPrognoseVandaag()" class="px-3 py-2 bg-blue-500 text-white rounded text-sm hover:bg-blue-600 transition-colors">
+                            📅 Vanaf Vandaag
+                        </button>
+                        <button onclick="setPrognoseMaandBegin()" class="px-3 py-2 bg-green-500 text-white rounded text-sm hover:bg-green-600 transition-colors">
+                            📆 Vanaf 1e v/d Maand
+                        </button>
+                        <button onclick="setPrognoseJaarBegin()" class="px-3 py-2 bg-purple-500 text-white rounded text-sm hover:bg-purple-600 transition-colors">
+                            🗺 Vanaf 1 Januari
+                        </button>
+                    </div>
+                </div>
+            </div>
+            
+            <!-- Status Display -->
+            <div class="mt-4 p-3 bg-blue-50 border border-blue-200 rounded-md">
+                <div class="text-sm text-blue-800">
+                    <strong>🗺 Huidige Instelling:</strong> 
+                    <span id="periode-display">Prognose vanaf <span id="current-start-date">...</span> voor komende 30 dagen</span>
+                </div>
+            </div>
+        </div>
+
+        <!-- Eenvoudige Prognose Tabel -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">📊 Banksaldo Prognose (Scrollbaar)</h3>
+            <div class="mb-3 text-sm text-gray-600">
+                📝 <strong>Tip:</strong> Nieuwste datum bovenaan, scroll voor volledige periode<br>
+                🗺 <strong>Start:</strong> Vanaf vandaag (<span id="prognose-startdatum">...</span>) voor komende <span id="prognose-periode-display">30</span> dagen
+            </div>
+            <div id="prognose-tabel" class="overflow-x-auto">
+                <div class="max-h-96 overflow-y-auto border border-gray-200 rounded-md">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50 sticky top-0 z-10">
+                            <tr>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Inkomsten</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Uitgaven</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Banksaldo</th>
+                                <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="prognose-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Upload Sectie -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">📊 Data Upload</h3>
+            
+            <!-- Upload Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8">
+                    <button onclick="setActiveTab('declaraties')" id="tab-declaraties" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏥 EPD Declaraties
+                    </button>
+                    <button onclick="setActiveTab('vaste-kosten')" id="tab-vaste-kosten" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        💸 Vaste Kosten
+                    </button>
+                    <button onclick="setActiveTab('verzekeraars')" id="tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏥 Zorgverzekeraars
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Declaraties Upload -->
+            <div id="upload-declaraties" class="upload-section">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🏥 EPD Declaraties Uploaden</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Jouw Format:</strong> Factuurnummer | Factuurdatum | Factuurnummer-Verzekeraar | Bedrag<br>
+                        🔄 <strong>Voorbeeld:</strong> 202500009600 | 24-9-2025 | 202500009600-a.s.r. Zorg | € 155,27
+                    </p>
+                    <textarea id="declaraties-data" placeholder="202500009600	24-9-2025	202500009600-a.s.r. Zorg	€ 155,27
+202500009601	25-9-2025	202500009601-CZ Zorgverzekeringen	€ 89,50
+202500009602	26-9-2025	202500009602-VGZ	€ 125,00
+202500009603	27-9-2025	202500009603-Achmea	€ 75,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processDeclaraties()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    Declaraties Verwerken
+                </button>
+            </div>
+
+            <!-- Vaste Kosten Upload (verborgen standaard) -->
+            <div id="upload-vaste-kosten" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">💸 Vaste Kosten Uploaden</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Crediteur | Bedrag | Dag | Categorie
+                    </p>
+                    <textarea id="vaste-kosten-data" placeholder="Verhuurder praktijkruimte	850.00	1	Huisvesting
+Verzekering maatschappij	125.00	15	Verzekeringen
+Software leverancier	49.95	28	IT" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processVasteKosten()" class="px-6 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors">
+                    Vaste Kosten Verwerken
+                </button>
+            </div>
+
+            <!-- Zorgverzekeraars Upload (verborgen standaard) -->
+            <div id="upload-verzekeraars" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🏥 Zorgverzekeraars Uploaden</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Naam | Termijn (dagen)<br>
+                        ⚠️ <strong>Belangrijk:</strong> Naam moet EXACT overeenkomen met declaraties!<br>
+                        💡 <strong>Voorbeeld:</strong> Als declaratie "a.s.r. Zorg" heeft, gebruik dan ook "a.s.r. Zorg"
+                    </p>
+                    <textarea id="verzekeraars-data" placeholder="a.s.r. Zorg	30
+CZ Zorgverzekeringen	30
+VGZ	28
+Achmea	30
+Menzis	35" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processVerzekeraars()" class="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
+                    Zorgverzekeraars Verwerken
+                </button>
+            </div>
+
+            <!-- Status Display -->
+            <div id="processing-status" class="mt-4"></div>
+        </div>
+
+        <!-- Demo Data Sectie -->
+        <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
+            <h3 class="text-lg font-semibold text-blue-900 mb-3">🎯 Demo Data</h3>
+            <p class="text-blue-800 text-sm mb-4">
+                Probeer de applicatie uit met voorbeelddata om te zien hoe het werkt.
+            </p>
+            <button onclick="loadDemoData()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                Demo Data Laden
+            </button>
+        </div>
+
+        <!-- Data Beheer Sectie -->
+        <div class="bg-white rounded-lg shadow-sm p-6 mb-8">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">📝 Data Beheer & Overzichten</h3>
+            
+            <!-- Beheer Tabs -->
+            <div class="border-b border-gray-200 mb-6">
+                <nav class="-mb-px flex space-x-8">
+                    <button onclick="setBeheerTab('declaraties')" id="beheer-tab-declaraties" class="border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏥 Declaraties (<span id="declaraties-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('vaste-kosten')" id="beheer-tab-vaste-kosten" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        💸 Vaste Kosten (<span id="vaste-kosten-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('verzekeraars')" id="beheer-tab-verzekeraars" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏥 Zorgverzekeraars (<span id="verzekeraars-count">0</span>)
+                    </button>
+                </nav>
+            </div>
+
+            <!-- Declaraties Beheer -->
+            <div id="beheer-declaraties" class="beheer-section">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Geïmporteerde Declaraties
+                    </h4>
+                    <button onclick="deleteAllDeclaraties()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldatum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="declaraties-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-declaraties" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen declaraties geïmporteerd
+                    </div>
+                </div>
+            </div>
+
+            <!-- Vaste Kosten Beheer -->
+            <div id="beheer-vaste-kosten" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Geïmporteerde Vaste Kosten
+                    </h4>
+                    <button onclick="deleteAllVasteKosten()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crediteur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="vaste-kosten-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-vaste-kosten" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen vaste kosten geïmporteerd
+                    </div>
+                </div>
+            </div>
+
+            <!-- Zorgverzekeraars Beheer -->
+            <div id="beheer-verzekeraars" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Geïmporteerde Zorgverzekeraars
+                    </h4>
+                    <button onclick="deleteAllVerzekeraars()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="mb-4 p-3 bg-yellow-50 border border-yellow-200 rounded-md">
+                    <h5 class="font-medium text-yellow-900 mb-2">🔍 Matching Status</h5>
+                    <div id="matching-status" class="text-sm text-yellow-800">
+                        Import eerst declaraties en zorgverzekeraars om matching te controleren.
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Naam</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaltermijn (dagen)</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="verzekeraars-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-verzekeraars" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen zorgverzekeraars geïmporteerd. Standaard betaaltermijnen worden gebruikt.
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Edit Modal -->
+        <div id="edit-modal" class="fixed inset-0 bg-gray-600 bg-opacity-50 overflow-y-auto h-full w-full z-50" style="display: none;">
+            <div class="relative top-20 mx-auto p-5 border w-11/12 max-w-md shadow-lg rounded-md bg-white">
+                <div class="mt-3">
+                    <h3 class="text-lg font-medium text-gray-900 mb-4" id="edit-modal-title">Item Bewerken</h3>
+                    <div id="edit-modal-content">
+                        <!-- Dynamische content -->
+                    </div>
+                    <div class="flex justify-end gap-3 mt-6">
+                        <button onclick="closeEditModal()" class="px-4 py-2 bg-gray-300 text-gray-700 rounded-md hover:bg-gray-400 transition-colors">
+                            Annuleren
+                        </button>
+                        <button id="save-edit-btn" onclick="saveEdit()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                            Opslaan
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- JavaScript -->
+    <script>
+        console.log('🚀 JavaScript wordt uitgevoerd...');
+        
+        // Global variables
+        let huidigBanksaldo = 2500.00;
+        let prognosePeriode = 30;
+        let prognoseStartDatum = new Date(); // Kan worden aangepast door gebruiker
+        let declaraties = [];
+        let vasteKosten = [];
+        let customVerzekeraars = []; // Custom verzekeraars overschrijven standaard
+        let activeTab = 'declaraties';
+        let activeBeheerTab = 'declaraties';
+        let editingItem = null;
+        let editingType = null;
+
+        // Update banksaldo
+        function updateBanksaldo(value) {
+            huidigBanksaldo = parseFloat(value) || 0;
+            document.getElementById('saldo-display').textContent = 
+                `€ ${huidigBanksaldo.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`;
+            updatePrognose();
+            console.log('💰 Banksaldo bijgewerkt:', huidigBanksaldo);
+        }
+
+        // Update periode
+        function updatePeriode(value) {
+            prognosePeriode = parseInt(value);
+            updateDisplays();
+            updatePrognose();
+            console.log('📅 Periode bijgewerkt:', prognosePeriode);
+        }
+        
+        // Update startdatum
+        function updateStartdatum(dateValue) {
+            if (dateValue) {
+                prognoseStartDatum = new Date(dateValue);
+                updateDisplays();
+                updatePrognose();
+                console.log('🗺 Startdatum bijgewerkt:', prognoseStartDatum.toLocaleDateString('nl-NL'));
+            }
+        }
+        
+        // Update displays
+        function updateDisplays() {
+            const startDateStr = prognoseStartDatum.toLocaleDateString('nl-NL');
+            document.getElementById('periode-display').innerHTML = 
+                `Prognose vanaf <span id="current-start-date">${startDateStr}</span> voor komende ${prognosePeriode} dagen`;
+            
+            if (document.getElementById('prognose-periode-display')) {
+                document.getElementById('prognose-periode-display').textContent = prognosePeriode;
+            }
+            
+            if (document.getElementById('current-start-date')) {
+                document.getElementById('current-start-date').textContent = startDateStr;
+            }
+        }
+        
+        // Quick action: Set prognose vanaf vandaag
+        function setPrognoseVandaag() {
+            const vandaag = new Date();
+            prognoseStartDatum = new Date(vandaag.getFullYear(), vandaag.getMonth(), vandaag.getDate());
+            
+            // Update input field
+            document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+            
+            updateDisplays();
+            updatePrognose();
+            console.log('📅 Prognose ingesteld vanaf vandaag');
+        }
+        
+        // Quick action: Set prognose vanaf 1e van de maand
+        function setPrognoseMaandBegin() {
+            const nu = new Date();
+            prognoseStartDatum = new Date(nu.getFullYear(), nu.getMonth(), 1);
+            
+            // Update input field
+            document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+            
+            updateDisplays();
+            updatePrognose();
+            console.log('📆 Prognose ingesteld vanaf begin van de maand');
+        }
+        
+        // Quick action: Set prognose vanaf 1 januari
+        function setPrognoseJaarBegin() {
+            const nu = new Date();
+            prognoseStartDatum = new Date(nu.getFullYear(), 0, 1); // 1 januari van dit jaar
+            
+            // Update input field
+            document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+            
+            updateDisplays();
+            updatePrognose();
+            console.log('🗺 Prognose ingesteld vanaf 1 januari');
+        }
+
+        // Tab switching
+        function setActiveTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('[id^="tab-"]').forEach(tab => {
+                tab.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm';
+            });
+            document.getElementById(`tab-${tabName}`).className = 'border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm';
+            
+            // Show/hide upload sections
+            document.querySelectorAll('.upload-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`upload-${tabName}`).classList.remove('hidden');
+            
+            activeTab = tabName;
+            console.log('📋 Tab gewijzigd naar:', tabName);
+        }
+
+        // Process declaraties
+        function processDeclaraties() {
+            const data = document.getElementById('declaraties-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen declaratie data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Declaraties aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden) en puntkomma
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 4) {
+                            // Jouw format: Factuurnummer | Factuurdatum | Factuurnummer-Verzekeraar | Bedrag
+                            const factuurnummer = columns[0]?.trim();
+                            const datum = parseDatum(columns[1]?.trim());
+                            const factuurVerzekeraardeel = columns[2]?.trim();
+                            const bedrag = parseBedrag(columns[3]?.trim());
+                            
+                            // Extract exacte verzekeraar naam uit de derde kolom (na de -)
+                            let verzekeraar = '';
+                            if (factuurVerzekeraardeel && factuurVerzekeraardeel.includes('-')) {
+                                const parts = factuurVerzekeraardeel.split('-');
+                                // Alles na de eerste - is de exacte verzekeraar naam  
+                                verzekeraar = parts.slice(1).join('-').trim();
+                            } else {
+                                verzekeraar = factuurVerzekeraardeel || 'Onbekend';
+                            }
+                            
+                            // GEEN opschoning - gebruik exacte naam zoals in data
+                            console.log('🏥 Exacte verzekeraar uit data:', `"${verzekeraar}"`);
+                            
+                            if (datum && verzekeraar && bedrag && factuurnummer) {
+                                // Bepaal betaaltermijn per verzekeraar
+                                const betaaltermijn = getBetaaltermijn(verzekeraar);
+                                const verwachteBetaaldatum = new Date(datum);
+                                verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + betaaltermijn);
+                                
+                                parsed.push({
+                                    datum,
+                                    verzekeraar,
+                                    bedrag,
+                                    factuurnummer,
+                                    patientNaam: '', // Niet beschikbaar in jouw format
+                                    verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0]
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                declaraties = declaraties.concat(parsed);
+                showStatus(`✅ ${parsed.length} declaraties succesvol verwerkt!`, 'success');
+                document.getElementById('declaraties-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                checkVerzekeraarsMatching();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken declaraties:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
+        // Process vaste kosten
+        function processVasteKosten() {
+            const data = document.getElementById('vaste-kosten-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen vaste kosten data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Vaste kosten aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden) en puntkomma
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 3) {
+                            const crediteur = columns[0]?.trim();
+                            const bedrag = parseBedrag(columns[1]?.trim());
+                            const dag = parseInt(columns[2]?.trim());
+                            const categorie = columns[3]?.trim() || 'Overig';
+                            
+                            if (crediteur && bedrag && dag > 0 && dag <= 31) {
+                                parsed.push({
+                                    crediteur,
+                                    bedrag: Math.abs(bedrag), // Vaste kosten zijn uitgaven
+                                    dag,
+                                    categorie
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                vasteKosten = vasteKosten.concat(parsed);
+                showStatus(`✅ ${parsed.length} vaste kosten succesvol verwerkt!`, 'success');
+                document.getElementById('vaste-kosten-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken vaste kosten:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
+        // Process verzekeraars
+        function processVerzekeraars() {
+            const data = document.getElementById('verzekeraars-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen zorgverzekeraar data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Zorgverzekeraars aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden) en puntkomma
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 2) {
+                            const naam = columns[0]?.trim();
+                            const termijn = parseInt(columns[1]?.trim());
+                            
+                            if (naam && termijn > 0 && termijn <= 365) {
+                                parsed.push({
+                                    naam,
+                                    termijn
+                                });
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan custom verzekeraars, maar voorkom duplicaten
+                parsed.forEach(newVerz => {
+                    const existingIndex = customVerzekeraars.findIndex(v => 
+                        v.naam.toLowerCase() === newVerz.naam.toLowerCase()
+                    );
+                    if (existingIndex >= 0) {
+                        // Update bestaande
+                        customVerzekeraars[existingIndex] = newVerz;
+                    } else {
+                        // Voeg nieuwe toe
+                        customVerzekeraars.push(newVerz);
+                    }
+                });
+                
+                showStatus(`✅ ${parsed.length} zorgverzekeraars verwerkt! Let op: namen moeten exact matchen met declaraties.`, 'success');
+                document.getElementById('verzekeraars-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+                // Toon suggestie als er geen exacte matches zijn
+                showVerzekeraarsMatchingSuggestion();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken zorgverzekeraars:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
+
+        // Load demo data
+        function loadDemoData() {
+            // Demo declaraties voor 2025 (met exacte verzekeraars namen zoals in echte data)
+            declaraties = [
+                {
+                    datum: '2025-01-05',
+                    verzekeraar: 'a.s.r. Zorg', // Exacte naam zoals in data
+                    bedrag: 155.27,
+                    factuurnummer: 'DEMO2025001',
+                    patientNaam: 'Demo Patiënt 1',
+                    verwachteBetaaldatum: '2025-02-04' // 30 dagen later
+                },
+                {
+                    datum: '2025-01-10',
+                    verzekeraar: 'CZ Zorgverzekeringen', // Exacte naam zoals in data
+                    bedrag: 89.50,
+                    factuurnummer: 'DEMO2025002',
+                    patientNaam: 'Demo Patiënt 2',
+                    verwachteBetaaldatum: '2025-02-09' // 30 dagen later
+                },
+                {
+                    datum: '2025-01-15',
+                    verzekeraar: 'VGZ', // Exacte naam zoals in data
+                    bedrag: 125.00,
+                    factuurnummer: 'DEMO2025003',
+                    patientNaam: 'Demo Patiënt 3',
+                    verwachteBetaaldatum: '2025-02-12' // 28 dagen later
+                }
+            ];
+
+            // Demo vaste kosten
+            vasteKosten = [
+                { crediteur: 'Verhuurder praktijkruimte', bedrag: 850.00, dag: 1, categorie: 'Huisvesting' },
+                { crediteur: 'Verzekering maatschappij', bedrag: 125.00, dag: 15, categorie: 'Verzekeringen' },
+                { crediteur: 'Software leverancier', bedrag: 49.95, dag: 28, categorie: 'IT' }
+            ];
+            
+            // Demo zorgverzekeraars (exacte namen zoals ze in declaraties voorkomen)
+            customVerzekeraars = [
+                { naam: 'a.s.r. Zorg', termijn: 30 },
+                { naam: 'CZ Zorgverzekeringen', termijn: 30 },
+                { naam: 'VGZ', termijn: 28 },
+                { naam: 'Achmea', termijn: 30 }
+            ];
+
+            showStatus('✅ Demo data succesvol geladen!', 'success');
+            updatePrognose();
+            updateDataTables();
+            checkVerzekeraarsMatching();
+        }
+
+        // Helper functions
+        function parseDatum(dateStr) {
+            if (!dateStr) return null;
+            
+            const formats = [
+                /^(\d{1,2})[\/\-\.](\d{1,2})[\/\-\.](\d{4})$/,
+                /^(\d{4})[\/\-\.](\d{1,2})[\/\-\.](\d{1,2})$/
+            ];
+            
+            for (let format of formats) {
+                const match = dateStr.match(format);
+                if (match) {
+                    let dag, maand, jaar;
+                    if (format === formats[0]) {
+                        [, dag, maand, jaar] = match;
+                    } else {
+                        [, jaar, maand, dag] = match;
+                    }
+                    
+                    const date = new Date(parseInt(jaar), parseInt(maand) - 1, parseInt(dag));
+                    if (!isNaN(date.getTime())) {
+                        return date.toISOString().split('T')[0];
+                    }
+                }
+            }
+            
+            return null;
+        }
+
+        function parseBedrag(bedragStr) {
+            if (!bedragStr) return 0;
+            
+            const cleaned = bedragStr.replace(/[€$£¥\s]/g, '');
+            const europeFormat = /^-?\d{1,3}(\.\d{3})*,\d{2}$/.test(cleaned);
+            
+            if (europeFormat) {
+                const normalized = cleaned.replace(/\./g, '').replace(',', '.');
+                return parseFloat(normalized) || 0;
+            } else {
+                const normalized = cleaned.replace(/,/g, '');
+                return parseFloat(normalized) || 0;
+            }
+        }
+
+        function cleanVerzekeraarsNaam(naam) {
+            if (!naam) return 'Onbekend';
+            
+            // Opschonen van verzekeraar naam
+            let cleaned = naam;
+            
+            // Verwijder veelvoorkomende woorden
+            cleaned = cleaned.replace(/\b(zorg|zorgverzekering|verzekering)\b/gi, '').trim();
+            
+            // Vervang bekende afkortingen
+            const replacements = {
+                'a.s.r.': 'ASR',
+                'asr': 'ASR', 
+                'cz': 'CZ',
+                'vgz': 'VGZ',
+                'achmea': 'Achmea',
+                'menzis': 'Menzis',
+                'dsw': 'DSW',
+                'friesland': 'De Friesland',
+                'onvz': 'ONVZ',
+                'ohra': 'OHRA',
+                'zilveren kruis': 'Zilveren Kruis'
+            };
+            
+            const lowerCleaned = cleaned.toLowerCase();
+            for (const [key, replacement] of Object.entries(replacements)) {
+                if (lowerCleaned.includes(key.toLowerCase())) {
+                    return replacement;
+                }
+            }
+            
+            // Geen transformatie - return exacte naam
+            return naam ? naam.trim() : 'Onbekend';
+        }
+
+        function getBetaaltermijn(verzekeraar) {
+            console.log('🔍 Zoek betaaltermijn voor:', verzekeraar);
+            
+            // Eerst checken of er custom verzekeraars zijn (exacte match)
+            const exactMatch = customVerzekeraars.find(v => 
+                v.naam.toLowerCase() === verzekeraar.toLowerCase()
+            );
+            if (exactMatch) {
+                console.log('✅ Exacte match gevonden:', exactMatch.naam, '->', exactMatch.termijn, 'dagen');
+                return exactMatch.termijn;
+            }
+            
+            // Dan gedeeltelijke match proberen
+            const partialMatch = customVerzekeraars.find(v => 
+                verzekeraar.toLowerCase().includes(v.naam.toLowerCase()) ||
+                v.naam.toLowerCase().includes(verzekeraar.toLowerCase())
+            );
+            if (partialMatch) {
+                console.log('⚠️ Gedeeltelijke match gevonden:', partialMatch.naam, '->', partialMatch.termijn, 'dagen');
+                return partialMatch.termijn;
+            }
+            
+            // Anders standaard verzekeraars
+            const standaardVerzekeraars = {
+                'cz': 30, 'vgz': 28, 'achmea': 30, 'menzis': 35,
+                'dsw': 30, 'friesland': 28, 'asr': 30, 'onvz': 30,
+                'ohra': 28, 'zilveren kruis': 30
+            };
+            
+            const naam = verzekeraar.toLowerCase();
+            for (const [key, termijn] of Object.entries(standaardVerzekeraars)) {
+                if (naam.includes(key)) {
+                    console.log('📋 Standaard match gevonden:', key, '->', termijn, 'dagen');
+                    return termijn;
+                }
+            }
+            
+            console.log('❌ Geen match gevonden, gebruik standaard 30 dagen');
+            return 30; // Standaard
+        }
+
+        function showStatus(message, type) {
+            const statusEl = document.getElementById('processing-status');
+            const colors = {
+                success: 'bg-green-50 border-green-200 text-green-800',
+                error: 'bg-red-50 border-red-200 text-red-800',
+                warning: 'bg-yellow-50 border-yellow-200 text-yellow-800',
+                info: 'bg-blue-50 border-blue-200 text-blue-800'
+            };
+            
+            statusEl.innerHTML = `
+                <div class="${colors[type] || colors.info} border rounded-md p-3">
+                    ${message}
+                </div>
+            `;
+            
+            // Auto-hide na 5 seconden voor success berichten
+            if (type === 'success') {
+                setTimeout(() => {
+                    statusEl.innerHTML = '';
+                }, 5000);
+            }
+        }
+
+        // Update prognose tabel
+        function updatePrognose() {
+            console.log('📊 Prognose wordt bijgewerkt...');
+            
+            // Gebruik de door gebruiker ingestelde startdatum
+            const startDatum = new Date(prognoseStartDatum);
+            
+            console.log('🗺 Prognose start vanaf:', startDatum.toLocaleDateString('nl-NL'));
+            const tbody = document.getElementById('prognose-body');
+            tbody.innerHTML = '';
+            
+            let lopendSaldo = huidigBanksaldo;
+            const prognoseRijen = []; // Verzamel alle rijen eerst
+            
+            for (let i = 0; i < prognosePeriode; i++) {
+                const datum = new Date(startDatum);
+                datum.setDate(startDatum.getDate() + i);
+                const dagStr = datum.toISOString().split('T')[0];
+                
+                let dagInkomsten = 0;
+                let dagUitgaven = 0;
+                
+                // Check declaraties
+                declaraties.forEach(decl => {
+                    if (decl.verwachteBetaaldatum === dagStr) {
+                        dagInkomsten += decl.bedrag;
+                    }
+                });
+                
+                // Check vaste kosten
+                const dagVanMaand = datum.getDate();
+                vasteKosten.forEach(vk => {
+                    if (vk.dag === dagVanMaand) {
+                        dagUitgaven += vk.bedrag;
+                    }
+                });
+                
+                lopendSaldo += dagInkomsten - dagUitgaven;
+                
+                // Voeg alle dagen toe (toon meer bewegingen)
+                if (dagInkomsten > 0 || dagUitgaven > 0 || i < 14) { // Toon meer dagen
+                    prognoseRijen.push({
+                        datum: datum,
+                        dagInkomsten,
+                        dagUitgaven,
+                        lopendSaldo,
+                        dagIndex: i
+                    });
+                }
+            }
+            
+            // Sorteer rijen zodat nieuwste datum (hoogste index) bovenaan staat
+            prognoseRijen.sort((a, b) => b.dagIndex - a.dagIndex);
+            
+            // Voeg rijen toe aan tabel
+            prognoseRijen.forEach(rij => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${rij.datum.toLocaleDateString('nl-NL')}
+                        ${rij.dagIndex < 7 ? '<span class="ml-2 text-xs bg-blue-100 text-blue-800 px-1 rounded">Binnenkort</span>' : ''}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-green-600 font-medium">
+                        ${rij.dagInkomsten > 0 ? '€ ' + rij.dagInkomsten.toLocaleString('nl-NL', { minimumFractionDigits: 2 }) : '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm text-red-600 font-medium">
+                        ${rij.dagUitgaven > 0 ? '€ ' + rij.dagUitgaven.toLocaleString('nl-NL', { minimumFractionDigits: 2 }) : '-'}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-sm font-bold ${rij.lopendSaldo >= 0 ? 'text-green-600' : 'text-red-600'}">
+                        € ${rij.lopendSaldo.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-6 py-4 whitespace-nowrap text-xs">
+                        ${rij.lopendSaldo < 0 ? '<span class="bg-red-100 text-red-800 px-2 py-1 rounded">⚠️ Negatief</span>' : '<span class="bg-green-100 text-green-800 px-2 py-1 rounded">✅ Positief</span>'}
+                    </td>
+                `;
+            });
+            
+            // Update de startdatum display
+            const startdatumEl = document.getElementById('prognose-startdatum');
+            if (startdatumEl) {
+                startdatumEl.textContent = startDatum.toLocaleDateString('nl-NL');
+            }
+            
+            console.log('✅ Prognose bijgewerkt - nieuwste datum bovenaan');
+        }
+
+        // Initialize app
+        function initApp() {
+            console.log('🎯 App wordt geïnitialiseerd...');
+            
+            document.getElementById('status-indicator').innerHTML = 
+                '<span class="text-green-600">✅ Klaar voor gebruik</span>';
+            
+            // Initialize date picker with current date
+            const vandaag = new Date();
+            prognoseStartDatum = new Date(vandaag.getFullYear(), vandaag.getMonth(), vandaag.getDate());
+            document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+            
+            // Initialize periode display
+            document.getElementById('prognose-periode-display').textContent = prognosePeriode;
+            
+            // Update all displays
+            updateDisplays();
+            updatePrognose();
+            updateDataTables();
+            
+            // Hide loading screen
+            const loadingScreen = document.getElementById('loading-screen');
+            if (loadingScreen) {
+                loadingScreen.style.display = 'none';
+            }
+            
+            console.log('🚀 App succesvol geladen! Startdatum ingesteld op:', prognoseStartDatum.toLocaleDateString('nl-NL'));
+        }
+
+        // === DATA BEHEER FUNCTIES ===
+
+        // Beheer tab switching
+        function setBeheerTab(tabName) {
+            // Update tab buttons
+            document.querySelectorAll('[id^="beheer-tab-"]').forEach(tab => {
+                tab.className = 'border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm';
+            });
+            document.getElementById(`beheer-tab-${tabName}`).className = 'border-blue-500 text-blue-600 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm';
+            
+            // Show/hide beheer sections
+            document.querySelectorAll('.beheer-section').forEach(section => {
+                section.classList.add('hidden');
+            });
+            document.getElementById(`beheer-${tabName}`).classList.remove('hidden');
+            
+            activeBeheerTab = tabName;
+            console.log('📋 Beheer tab gewijzigd naar:', tabName);
+        }
+
+        // Update data tables
+        function updateDataTables() {
+            updateDeclaratiesTable();
+            updateVasteKostenTable();
+            updateVerzekeraarsTable();
+            updateCounts();
+        }
+
+        // Update counts in tabs
+        function updateCounts() {
+            document.getElementById('declaraties-count').textContent = declaraties.length;
+            document.getElementById('vaste-kosten-count').textContent = vasteKosten.length;
+            document.getElementById('verzekeraars-count').textContent = customVerzekeraars.length;
+        }
+
+        // Update declaraties table
+        function updateDeclaratiesTable() {
+            const tbody = document.getElementById('declaraties-table-body');
+            const noData = document.getElementById('no-declaraties');
+            
+            tbody.innerHTML = '';
+            
+            if (declaraties.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            // Sorteer declaraties op datum (nieuwste eerst)
+            const gesorteerdeDeclaraties = [...declaraties].sort((a, b) => {
+                return new Date(b.datum) - new Date(a.datum);
+            });
+            
+            gesorteerdeDeclaraties.forEach((decl, sortedIndex) => {
+                // Vind originele index voor edit/delete functies
+                const originalIndex = declaraties.findIndex(d => 
+                    d.factuurnummer === decl.factuurnummer && d.datum === decl.datum
+                );
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${decl.factuurnummer}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">
+                        ${new Date(decl.datum).toLocaleDateString('nl-NL')}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${decl.verzekeraar}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
+                        € ${decl.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-blue-600">
+                        ${new Date(decl.verwachteBetaaldatum).toLocaleDateString('nl-NL')}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editDeclaratie(${originalIndex})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteDeclaratie(${originalIndex})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Update vaste kosten table
+        function updateVasteKostenTable() {
+            const tbody = document.getElementById('vaste-kosten-table-body');
+            const noData = document.getElementById('no-vaste-kosten');
+            
+            tbody.innerHTML = '';
+            
+            if (vasteKosten.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            vasteKosten.forEach((vk, index) => {
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${vk.crediteur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        € ${Math.abs(vk.bedrag).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${vk.dag}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${vk.categorie}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editVasteKosten(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteVasteKosten(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // === EDIT FUNCTIES ===
+
+        // Edit declaratie
+        function editDeclaratie(index) {
+            const decl = declaraties[index];
+            editingItem = index;
+            editingType = 'declaratie';
+            
+            document.getElementById('edit-modal-title').textContent = 'Declaratie Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Factuurnummer</label>
+                        <input type="text" id="edit-factuurnummer" value="${decl.factuurnummer}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Datum</label>
+                        <input type="date" id="edit-datum" value="${decl.datum}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Verzekeraar</label>
+                        <input type="text" id="edit-verzekeraar" value="${decl.verzekeraar}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€)</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${decl.bedrag}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        // Edit vaste kosten
+        function editVasteKosten(index) {
+            const vk = vasteKosten[index];
+            editingItem = index;
+            editingType = 'vaste-kosten';
+            
+            document.getElementById('edit-modal-title').textContent = 'Vaste Kosten Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Crediteur</label>
+                        <input type="text" id="edit-crediteur" value="${vk.crediteur}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Bedrag (€)</label>
+                        <input type="number" step="0.01" id="edit-bedrag" value="${Math.abs(vk.bedrag)}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Dag (1-31)</label>
+                        <input type="number" min="1" max="31" id="edit-dag" value="${vk.dag}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Categorie</label>
+                        <input type="text" id="edit-categorie" value="${vk.categorie}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        // Save edit
+        function saveEdit() {
+            if (editingType === 'declaratie') {
+                const factuurnummer = document.getElementById('edit-factuurnummer').value;
+                const datum = document.getElementById('edit-datum').value;
+                const verzekeraar = document.getElementById('edit-verzekeraar').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                
+                if (!factuurnummer || !datum || !verzekeraar || !bedrag) {
+                    alert('Vul alle velden in!');
+                    return;
+                }
+                
+                // Update declaratie
+                const betaaltermijn = getBetaaltermijn(verzekeraar);
+                const verwachteBetaaldatum = new Date(datum);
+                verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + betaaltermijn);
+                
+                declaraties[editingItem] = {
+                    ...declaraties[editingItem],
+                    factuurnummer,
+                    datum,
+                    verzekeraar,
+                    bedrag,
+                    verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0]
+                };
+                
+            } else if (editingType === 'verzekeraar') {
+                const naam = document.getElementById('edit-naam').value;
+                const termijn = parseInt(document.getElementById('edit-termijn').value);
+                
+                if (!naam || !termijn || termijn < 1 || termijn > 365) {
+                    alert('Vul alle velden correct in!');
+                    return;
+                }
+                
+                customVerzekeraars[editingItem] = {
+                    ...customVerzekeraars[editingItem],
+                    naam,
+                    termijn
+                };
+                
+            } else if (editingType === 'vaste-kosten') {
+                const crediteur = document.getElementById('edit-crediteur').value;
+                const bedrag = parseFloat(document.getElementById('edit-bedrag').value);
+                const dag = parseInt(document.getElementById('edit-dag').value);
+                const categorie = document.getElementById('edit-categorie').value;
+                
+                if (!crediteur || !bedrag || !dag || dag < 1 || dag > 31) {
+                    alert('Vul alle velden correct in!');
+                    return;
+                }
+                
+                vasteKosten[editingItem] = {
+                    ...vasteKosten[editingItem],
+                    crediteur,
+                    bedrag: Math.abs(bedrag), // Vaste kosten zijn uitgaven
+                    dag,
+                    categorie
+                };
+            }
+            
+            closeEditModal();
+            updateDataTables();
+            updatePrognose();
+            showStatus('✅ Item succesvol bijgewerkt!', 'success');
+        }
+
+        // Close edit modal
+        function closeEditModal() {
+            document.getElementById('edit-modal').style.display = 'none';
+            editingItem = null;
+            editingType = null;
+        }
+
+        // === DELETE FUNCTIES ===
+
+        // Delete single declaratie
+        function deleteDeclaratie(index) {
+            if (confirm('Weet je zeker dat je deze declaratie wilt verwijderen?')) {
+                declaraties.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Declaratie verwijderd!', 'success');
+            }
+        }
+
+        // Delete single vaste kosten
+        function deleteVasteKosten(index) {
+            if (confirm('Weet je zeker dat je deze vaste kosten wilt verwijderen?')) {
+                vasteKosten.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Vaste kosten verwijderd!', 'success');
+            }
+        }
+
+        // Delete all declaraties
+        function deleteAllDeclaraties() {
+            if (confirm(`Weet je zeker dat je alle ${declaraties.length} declaraties wilt verwijderen?`)) {
+                declaraties = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle declaraties verwijderd!', 'success');
+            }
+        }
+
+        // Delete all vaste kosten
+        function deleteAllVasteKosten() {
+            if (confirm(`Weet je zeker dat je alle ${vasteKosten.length} vaste kosten wilt verwijderen?`)) {
+                vasteKosten = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle vaste kosten verwijderd!', 'success');
+            }
+        }
+
+        // === VERZEKERAARS BEHEER FUNCTIES ===
+
+        // Update verzekeraars table
+        function updateVerzekeraarsTable() {
+            const tbody = document.getElementById('verzekeraars-table-body');
+            const noData = document.getElementById('no-verzekeraars');
+            
+            tbody.innerHTML = '';
+            
+            if (customVerzekeraars.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            customVerzekeraars.forEach((verz, index) => {
+                // Check of deze verzekeraar declaraties heeft
+                const heeftDeclaraties = declaraties.some(d => 
+                    d.verzekeraar.toLowerCase() === verz.naam.toLowerCase()
+                );
+                
+                const matchStatus = heeftDeclaraties 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Actief</span>'
+                    : '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded text-xs">⚠️ Geen declaraties</span>';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${verz.naam}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">
+                        ${verz.termijn} dagen
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${matchStatus}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editVerzekeraar(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteVerzekeraar(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Edit verzekeraar
+        function editVerzekeraar(index) {
+            const verz = customVerzekeraars[index];
+            editingItem = index;
+            editingType = 'verzekeraar';
+            
+            document.getElementById('edit-modal-title').textContent = 'Zorgverzekeraar Bewerken';
+            document.getElementById('edit-modal-content').innerHTML = `
+                <div class="space-y-4">
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Naam</label>
+                        <input type="text" id="edit-naam" value="${verz.naam}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                    <div>
+                        <label class="block text-sm font-medium text-gray-700 mb-1">Betaaltermijn (dagen)</label>
+                        <input type="number" min="1" max="365" id="edit-termijn" value="${verz.termijn}" 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500">
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('edit-modal').style.display = 'block';
+        }
+
+        // Delete single verzekeraar
+        function deleteVerzekeraar(index) {
+            if (confirm('Weet je zeker dat je deze zorgverzekeraar wilt verwijderen?')) {
+                customVerzekeraars.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Zorgverzekeraar verwijderd!', 'success');
+            }
+        }
+
+        // Delete all verzekeraars
+        function deleteAllVerzekeraars() {
+            if (confirm(`Weet je zeker dat je alle ${customVerzekeraars.length} zorgverzekeraars wilt verwijderen?\n\nDe standaard betaaltermijnen worden dan weer gebruikt.`)) {
+                customVerzekeraars = [];
+                updateDataTables();
+                updatePrognose();
+                showStatus('✅ Alle zorgverzekeraars verwijderd! Standaard termijnen worden gebruikt.', 'success');
+            }
+        }
+
+        // === MATCHING CONTROLE FUNCTIES ===
+
+        // Toon suggesties voor betere matching
+        function showVerzekeraarsMatchingSuggestion() {
+            const matchingStatusEl = document.getElementById('matching-status');
+            
+            if (declaraties.length === 0 && customVerzekeraars.length === 0) {
+                matchingStatusEl.innerHTML = 'Import eerst declaraties en zorgverzekeraars om matching te controleren.';
+                return;
+            }
+            
+            if (declaraties.length === 0) {
+                matchingStatusEl.innerHTML = '📝 Geen declaraties geïmporteerd. Import eerst declaraties.';
+                return;
+            }
+            
+            if (customVerzekeraars.length === 0) {
+                const declaratieVerzekeraars = [...new Set(declaraties.map(d => d.verzekeraar))];
+                matchingStatusEl.innerHTML = `⚠️ Geen custom zorgverzekeraars. Alle declaraties (${declaratieVerzekeraars.join(', ')}) gebruiken standaard termijnen.`;
+                return;
+            }
+            
+            const declaratieVerzekeraars = [...new Set(declaraties.map(d => d.verzekeraar))];
+            const customNamen = customVerzekeraars.map(v => v.naam);
+            
+            const unmatchedDeclaraties = [];
+            const perfectMatches = [];
+            
+            // Check welke declaratie verzekeraars een exacte match hebben
+            declaratieVerzekeraars.forEach(declVerz => {
+                const hasExactMatch = customNamen.some(customNaam => 
+                    customNaam.toLowerCase() === declVerz.toLowerCase()
+                );
+                if (hasExactMatch) {
+                    perfectMatches.push(declVerz);
+                } else {
+                    unmatchedDeclaraties.push(declVerz);
+                }
+            });
+            
+            let statusHtml = '';
+            
+            if (perfectMatches.length > 0) {
+                statusHtml += `✅ <strong>Perfecte matches (${perfectMatches.length}):</strong> ${perfectMatches.join(', ')}<br>`;
+            }
+            
+            if (unmatchedDeclaraties.length > 0) {
+                statusHtml += `⚠️ <strong>Gebruiken standaard termijn (${unmatchedDeclaraties.length}):</strong> ${unmatchedDeclaraties.join(', ')}`;
+            }
+            
+            if (perfectMatches.length > 0 && unmatchedDeclaraties.length === 0) {
+                statusHtml = '✅ <strong>Perfect!</strong> Alle declaratie verzekeraars hebben exacte matches.';
+            }
+            
+            matchingStatusEl.innerHTML = statusHtml || 'Status wordt berekend...';
+        }
+
+        // Check matching na elke declaratie import
+        function checkVerzekeraarsMatching() {
+            setTimeout(() => {
+                showVerzekeraarsMatchingSuggestion();
+            }, 1000);
+        }
+
+        // Start app when DOM is ready
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', initApp);
+        } else {
+            initApp();
+        }
+    </script>
+</body>
+</html>
