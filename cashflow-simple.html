@@ -49,6 +49,17 @@
                     <div id="status-indicator" class="text-sm bg-yellow-50 border border-yellow-200 rounded px-3 py-1">
                         <span class="text-yellow-600">🔄 Initialiseren...</span>
                     </div>
+                    
+                    <!-- Data Management Buttons -->
+                    <div class="flex items-center space-x-2">
+                        <button onclick="saveDataToStorage()" class="text-xs bg-blue-50 border border-blue-200 rounded px-2 py-1 hover:bg-blue-100 transition-colors" title="Handmatig opslaan">
+                            💾 Opslaan
+                        </button>
+                        <button onclick="confirmAndClearData()" class="text-xs bg-red-50 border border-red-200 rounded px-2 py-1 hover:bg-red-100 transition-colors" title="Alle opgeslagen data wissen">
+                            🗑️ Wissen
+                        </button>
+                    </div>
+                    
                     <span class="text-sm text-gray-500">🇳🇱 Nederlandse Versie</span>
                 </div>
             </div>
@@ -243,6 +254,9 @@
                     <button onclick="setActiveTab('correctie-facturen')" id="tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔧 Correctie Facturen
                     </button>
+                    <button onclick="setActiveTab('bankmutaties')" id="tab-bankmutaties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏦 Bankmutaties
+                    </button>
                 </nav>
             </div>
 
@@ -251,14 +265,32 @@
                 <div class="mb-4">
                     <h4 class="font-medium text-gray-900 mb-2">🏥 EPD Declaraties Uploaden</h4>
                     <p class="text-sm text-gray-600 mb-3">
-                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
-                        📊 <strong>Jouw Format:</strong> Factuurnummer | Factuurdatum | Factuurnummer-Verzekeraar | Bedrag<br>
+                        📋 <strong>CSV/Excel Upload:</strong> Upload je EPD export bestand<br>
+                        📊 <strong>Of handmatig invoeren:</strong> Factuurnummer | Factuurdatum | Factuurnummer-Verzekeraar | Bedrag<br>
                         🔄 <strong>Voorbeeld:</strong> 202500009600 | 24-9-2025 | 202500009600-a.s.r. Zorg | € 155,27
                     </p>
-                    <textarea id="declaraties-data" placeholder="202500009600	24-9-2025	202500009600-a.s.r. Zorg	€ 155,27
+                    
+                    <!-- File Upload Section -->
+                    <div class="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        <div class="text-center">
+                            <input type="file" id="declaraties-file" accept=".csv,.txt,.xls,.xlsx" class="hidden" onchange="handleDeclaratiesFileUpload(event)">
+                            <button onclick="document.getElementById('declaraties-file').click()" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                                📁 EPD Bestand Uploaden
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2">CSV, TXT of Excel bestanden</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual Input -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            🖊️ Of plak handmatig je EPD data hier:
+                        </label>
+                        <textarea id="declaraties-data" placeholder="202500009600	24-9-2025	202500009600-a.s.r. Zorg	€ 155,27
 202500009601	25-9-2025	202500009601-CZ Zorgverzekeringen	€ 89,50
 202500009602	26-9-2025	202500009602-VGZ	€ 125,00
 202500009603	27-9-2025	202500009603-Achmea	€ 75,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                    </div>
                 </div>
                 <button onclick="processDeclaraties()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
                     Declaraties Verwerken
@@ -384,8 +416,177 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 </button>
             </div>
 
+            <!-- Bankmutaties Upload (verborgen standaard) -->
+            <div id="upload-bankmutaties" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🏦 Bankmutaties Uploaden (CSV)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>CSV Bestand Upload:</strong> Selecteer je BUNQ, ING, ABN, Rabobank of SNS CSV bestand<br>
+                        📊 <strong>Of kopieer/plak data:</strong> Datum | Bedrag | Omschrijving | Tegenrekening<br>
+                        💰 <strong>Bedrag:</strong> Positief voor inkomsten, negatief voor uitgaven<br>
+                        🔄 <strong>Automatisch:</strong> Detecteert BUNQ formaat en andere Nederlandse banken
+                    </p>
+                    
+                    <!-- File Upload Section -->
+                    <div class="mb-4 p-4 border-2 border-dashed border-gray-300 rounded-lg">
+                        <div class="text-center">
+                            <input type="file" id="bankmutaties-file" accept=".csv,.txt" class="hidden" onchange="handleBankFileUpload(event)">
+                            <button onclick="document.getElementById('bankmutaties-file').click()" class="inline-flex items-center px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                                📁 CSV Bestand Uploaden
+                            </button>
+                            <p class="text-xs text-gray-500 mt-2">Of sleep je CSV bestand hierheen</p>
+                        </div>
+                    </div>
+                    
+                    <!-- Manual Input Section -->
+                    <div class="mb-4">
+                        <label class="block text-sm font-medium text-gray-700 mb-2">
+                            🖊️ Of plak handmatig je CSV data hier:
+                        </label>
+                        <textarea id="bankmutaties-data" placeholder="Datum,Bedrag,Omschrijving,Tegenrekening
+2025-01-15,125.50,BETALING VAN DECLARATIE,NL91ABNA0417164300
+2025-01-16,-850.00,HUUR PRAKTIJKRUIMTE,NL44RABO0123456789
+2025-01-17,89.75,BETALING PARTICULIER FACTUUR,NL12INGB0001234567" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                    </div>
+                </div>
+                
+                <div class="mb-4">
+                    <label class="flex items-center space-x-2">
+                        <input type="checkbox" id="auto-reconcile" checked class="rounded border-gray-300">
+                        <span class="text-sm font-medium text-gray-700">
+                            🤖 Automatische reconciliatie na import
+                        </span>
+                    </label>
+                </div>
+                
+                <button onclick="processBankmutaties()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    Bankmutaties Verwerken
+                </button>
+            </div>
+
             <!-- Status Display -->
             <div id="processing-status" class="mt-4"></div>
+        </div>
+
+        <!-- Bank Reconciliatie Sectie -->
+        <div id="reconciliatie-sectie" class="bg-white rounded-lg shadow-sm p-6 mb-8" style="display: none;">
+            <h3 class="text-xl font-semibold text-gray-900 mb-4">🔍 Bank Reconciliatie Overzicht</h3>
+            
+            <!-- Reconciliatie Samenvatting -->
+            <div class="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-green-900 mb-1">✅ Gematched</h4>
+                    <div class="text-2xl font-bold text-green-700" id="matched-count">0</div>
+                    <div class="text-sm text-green-600" id="matched-amount">€ 0,00</div>
+                </div>
+                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-yellow-900 mb-1">⚠️ Handmatig Controleren</h4>
+                    <div class="text-2xl font-bold text-yellow-700" id="manual-count">0</div>
+                    <div class="text-sm text-yellow-600" id="manual-amount">€ 0,00</div>
+                </div>
+                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-red-900 mb-1">❌ Niet Gematched</h4>
+                    <div class="text-2xl font-bold text-red-700" id="unmatched-count">0</div>
+                    <div class="text-sm text-red-600" id="unmatched-amount">€ 0,00</div>
+                </div>
+                <div class="bg-purple-50 border border-purple-200 rounded-lg p-4">
+                    <h4 class="font-semibold text-purple-900 mb-1">💡 Suggesties</h4>
+                    <div class="text-2xl font-bold text-purple-700" id="suggestions-count">0</div>
+                    <div class="text-sm text-purple-600" id="suggestions-amount">€ 0,00</div>
+                </div>
+            </div>
+
+            <!-- Reconciliatie Details -->
+            <div class="space-y-4">
+                <!-- Handmatige Controle Nodig -->
+                <div id="manual-review-section" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" style="display: none;">
+                    <h4 class="font-semibold text-yellow-900 mb-3">⚠️ Handmatige Controle Vereist</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-yellow-200">
+                            <thead class="bg-yellow-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Datum Bank</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Bedrag Bank</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Mogelijke Matches</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="manual-review-body" class="bg-white divide-y divide-yellow-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Niet Gematched -->
+                <div id="unmatched-section" class="bg-red-50 border border-red-200 rounded-lg p-4" style="display: none;">
+                    <h4 class="font-semibold text-red-900 mb-3">❌ Niet Gematched</h4>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-red-200">
+                            <thead class="bg-red-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Datum</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Bedrag</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Type</th>
+                                </tr>
+                            </thead>
+                            <tbody id="unmatched-body" class="bg-white divide-y divide-red-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Wel Gematched (Samengevouwen) -->
+                <div id="matched-section" class="bg-green-50 border border-green-200 rounded-lg p-4" style="display: none;">
+                    <button onclick="toggleMatchedDetails()" class="w-full flex items-center justify-between p-2 text-green-900 font-semibold">
+                        <span>✅ Gematched Transacties (<span id="matched-total">0</span>)</span>
+                        <span id="matched-toggle-icon">▼</span>
+                    </button>
+                    <div id="matched-details" class="mt-3 hidden overflow-x-auto">
+                        <table class="min-w-full divide-y divide-green-200">
+                            <thead class="bg-green-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Datum Bank</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Bedrag</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Gematched Met</th>
+                                </tr>
+                            </thead>
+                            <tbody id="matched-body" class="bg-white divide-y divide-green-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Suggesties voor Nieuwe Uitgaven -->
+                <div id="suggestions-section" class="bg-purple-50 border border-purple-200 rounded-lg p-4" style="display: none;">
+                    <h4 class="font-semibold text-purple-900 mb-3">💡 Suggesties voor Nieuwe Uitgaven</h4>
+                    <p class="text-sm text-purple-700 mb-3">
+                        Deze uitgaven konden niet worden gematched met bekende vaste kosten. 
+                        Klik op ‘Toevoegen’ om ze als nieuwe vaste uitgave op te slaan.
+                    </p>
+                    <div class="overflow-x-auto">
+                        <table class="min-w-full divide-y divide-purple-200">
+                            <thead class="bg-purple-100">
+                                <tr>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Datum</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Bedrag</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Reden</th>
+                                    <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="suggestions-body" class="bg-white divide-y divide-purple-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Demo Data Sectie -->
@@ -426,6 +627,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     </button>
                     <button onclick="setBeheerTab('correctie-facturen')" id="beheer-tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔧 Correcties (<span id="correctie-facturen-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('bankmutaties')" id="beheer-tab-bankmutaties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🏦 Bankmutaties (<span id="bankmutaties-count">0</span>)
                     </button>
                 </nav>
             </div>
@@ -665,6 +869,53 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     </div>
                 </div>
             </div>
+
+            <!-- Bankmutaties Beheer -->
+            <div id="beheer-bankmutaties" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Geïmporteerde Bankmutaties
+                    </h4>
+                    <div class="flex gap-2">
+                        <button onclick="runBankReconciliation()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm">
+                            🔍 Reconciliatie Uitvoeren
+                        </button>
+                        <button onclick="autoMatchAll()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm">
+                            🤖 Auto-Match Alles
+                        </button>
+                        <button onclick="aggressiveAutoMatch()" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm">
+                            🚀 Agressief Matchen
+                        </button>
+                        <button onclick="debugMatching()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-sm">
+                            🐛 Debug Matching
+                        </button>
+                        <button onclick="deleteAllBankmutaties()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                            🗑️ Alles Verwijderen
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tegenrekening</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="bankmutaties-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-bankmutaties" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen bankmutaties geïmporteerd
+                    </div>
+                </div>
+            </div>
         </div>
 
         <!-- Edit Modal -->
@@ -708,6 +959,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
         let creditFacturen = []; // Voor particulieren: factuur, datum, debiteur, bedrag
         let creditDeclaraties = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
         let correctieFacturen = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
+        
+        // Bank reconciliatie data
+        let bankmutaties = []; // Voor banktransacties: datum, bedrag, omschrijving, tegenrekening
         
         let activeTab = 'declaraties';
         let activeBeheerTab = 'declaraties';
@@ -870,9 +1124,32 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     }
                 });
                 
-                declaraties = declaraties.concat(parsed);
-                showStatus(`✅ ${parsed.length} declaraties succesvol verwerkt!`, 'success');
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, declaraties, ['factuurnummer', 'datum', 'bedrag']);
+                
+                if (duplicateCheck.duplicates.length > 0) {
+                    console.log('🔍 Declaraties duplicate check results:', duplicateCheck);
+                }
+                
+                // Voeg alleen unieke items toe
+                declaraties = declaraties.concat(duplicateCheck.unique);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe declaraties verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} declaraties succesvol verwerkt en opgeslagen!`, 'success');
+                }
+                
                 document.getElementById('declaraties-data').value = '';
+                
+                // Reset file input
+                const fileInput = document.getElementById('declaraties-file');
+                if (fileInput) fileInput.value = '';
+                
                 updatePrognose();
                 updateDataTables();
                 checkVerzekeraarsMatching();
@@ -919,8 +1196,21 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     }
                 });
                 
-                vasteKosten = vasteKosten.concat(parsed);
-                showStatus(`✅ ${parsed.length} vaste kosten succesvol verwerkt!`, 'success');
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, vasteKosten, ['crediteur', 'bedrag', 'betaaldag']);
+                
+                // Voeg alleen unieke items toe
+                vasteKosten = vasteKosten.concat(duplicateCheck.unique);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe vaste kosten verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} vaste kosten succesvol verwerkt en opgeslagen!`, 'success');
+                }
                 document.getElementById('vaste-kosten-data').value = '';
                 updatePrognose();
                 updateDataTables();
@@ -991,11 +1281,50 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             }
         }
 
+        // === HULP FUNCTIES ===
+
+        // Converteer Nederlandse datum format naar ISO format
+        function convertDutchDateToISO(dutchDate) {
+            if (!dutchDate) return dutchDate;
+            
+            // Als het al ISO format is (yyyy-mm-dd), return as is
+            if (dutchDate.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                return dutchDate;
+            }
+            
+            // Converteer van "8-1-2025" of "08-01-2025" naar "2025-01-08"
+            if (dutchDate.includes('-')) {
+                const parts = dutchDate.split('-');
+                if (parts.length === 3) {
+                    const dag = parts[0].padStart(2, '0');
+                    const maand = parts[1].padStart(2, '0');
+                    const jaar = parts[2];
+                    return `${jaar}-${maand}-${dag}`;
+                }
+            }
+            
+            return dutchDate; // Return original if can't convert
+        }
+
+        // Parse bedrag uit verschillende formaten
+        function parseBedrag(bedragStr) {
+            if (!bedragStr) return NaN;
+            
+            // Vervang € en spaties, converteer , naar .
+            let cleaned = bedragStr.replace(/[€\s]/g, '').replace(',', '.');
+            // Remove any remaining non-numeric characters except . and -
+            cleaned = cleaned.replace(/[^\d.-]/g, '');
+            
+            return parseFloat(cleaned);
+        }
+
         // === CREDIT EN CORRECTIE VERWERKING FUNCTIES ===
 
         // Verwerk credit facturen (particulieren)
         function processCreditFacturen() {
+            console.log('🎯 processCreditFacturen() aangeroepen');
             const data = document.getElementById('credit-facturen-data').value.trim();
+            console.log('📝 Data opgehaald:', data);
             if (!data) {
                 showStatus('⚠️ Geen credit facturen data ingevoerd', 'warning');
                 return;
@@ -1007,10 +1336,13 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 const lines = data.split('\n');
                 const parsed = [];
                 
+                console.log(`📊 Processing ${lines.length} lines for credit facturen:`, lines);
                 lines.forEach((line, index) => {
-                    if (line.trim()) {
+                    if (line.trim() && !line.toLowerCase().includes('factuur\tdatum\tdebiteur')) {
+                        console.log(`📝 Processing credit factuur line ${index}: "${line}"`);
                         // Support voor Excel copy-paste (tab-gescheiden)
                         const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        console.log(`🔧 Credit factuur columns (${columns.length}):`, columns);
                         if (columns.length >= 4) {
                             const factuur = columns[0]?.trim();
                             const datum = columns[1]?.trim();
@@ -1018,16 +1350,32 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                             const bedragStr = columns[3]?.trim();
                             
                             if (factuur && datum && debiteur && bedragStr) {
-                                // Parse bedrag
-                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                // Extract debiteur name from "factuurnummer-naam" format (same as particuliere facturen)
+                                let cleanDebiteur = debiteur;
+                                if (debiteur.includes('-')) {
+                                    const dashIndex = debiteur.indexOf('-');
+                                    if (dashIndex > 0) {
+                                        cleanDebiteur = debiteur.substring(dashIndex + 1).trim();
+                                        console.log(`📝 Debiteur extracted: "${debiteur}" -> "${cleanDebiteur}"`);
+                                    }
+                                }
                                 
-                                if (!isNaN(bedrag) && bedrag > 0) {
+                                // Parse bedrag
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
+                                
+                                console.log(`💰 Credit Facturen - Parsing: "${bedragStr}" -> ${bedrag}, date: "${datum}" -> "${isoDate}"`);
+                                
+                                if (!isNaN(bedrag) && bedrag !== 0 && cleanDebiteur) {
+                                    console.log(`✅ Credit factuur accepted:`, { factuur, datum: isoDate, debiteur: cleanDebiteur, bedrag: Math.abs(bedrag) });
                                     parsed.push({
                                         factuur,
-                                        datum,
-                                        debiteur,
-                                        bedrag: Math.abs(bedrag) // Altijd positief voor credits
+                                        datum: isoDate,
+                                        debiteur: cleanDebiteur, // Use clean name
+                                        bedrag: Math.abs(bedrag) // Altijd positief voor storage (we nemen absolute waarde)
                                     });
+                                } else {
+                                    console.log(`❌ Credit factuur rejected:`, { factuur, datum, debiteur: cleanDebiteur, bedrag, isNaN: isNaN(bedrag), isNotZero: bedrag !== 0, hasFactuur: !!factuur, hasDatum: !!datum, hasDebiteur: !!debiteur, hasCleanDebiteur: !!cleanDebiteur, hasBedragStr: !!bedragStr });
                                 }
                             }
                         }
@@ -1035,9 +1383,22 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 });
                 
                 // Voeg toe aan credit facturen array
-                creditFacturen.push(...parsed);
+                console.log(`📦 Adding ${parsed.length} credit facturen to array. Current array length: ${creditFacturen.length}`);
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, creditFacturen, ['factuur', 'datum', 'bedrag']);
                 
-                showStatus(`✅ ${parsed.length} credit facturen verwerkt! Deze worden afgetrokken van de cashflow.`, 'success');
+                creditFacturen.push(...duplicateCheck.unique);
+                console.log(`📦 New credit facturen array length: ${creditFacturen.length}`);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe credit facturen verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} credit facturen verwerkt en opgeslagen! Deze worden afgetrokken van de cashflow.`, 'success');
+                }
                 document.getElementById('credit-facturen-data').value = '';
                 updatePrognose();
                 updateDataTables();
@@ -1050,8 +1411,11 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
 
         // Verwerk credit declaraties (verzekeraars)
         function processCreditDeclaraties() {
+            console.log('🎯 processCreditDeclaraties() aangeroepen');
             const data = document.getElementById('credit-declaraties-data').value.trim();
+            console.log('📝 Data opgehaald:', data);
             if (!data) {
+                console.log('⚠️ Geen data - functie stopt');
                 showStatus('⚠️ Geen credit declaraties data ingevoerd', 'warning');
                 return;
             }
@@ -1063,10 +1427,13 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 const parsed = [];
                 let matchedCount = 0;
                 
+                console.log(`📊 Processing ${lines.length} lines for credit declaraties:`, lines);
                 lines.forEach((line, index) => {
-                    if (line.trim()) {
+                    if (line.trim() && !line.toLowerCase().includes('factuur\tdatum')) {
+                        console.log(`📝 Processing credit declaratie line ${index}: "${line}"`);
                         // Support voor Excel copy-paste (tab-gescheiden)
                         const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        console.log(`🔧 Credit declaratie columns (${columns.length}):`, columns);
                         if (columns.length >= 5) {
                             const factuur = columns[0]?.trim();
                             const datum = columns[1]?.trim();
@@ -1076,12 +1443,15 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                             
                             if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
                                 // Parse bedrag
-                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
                                 
-                                if (!isNaN(bedrag) && bedrag > 0) {
+                                console.log(`💰 Credit Declaraties - Parsing: "${bedragStr}" -> ${bedrag}, date: "${datum}" -> "${isoDate}"`);
+                                
+                                if (!isNaN(bedrag) && bedrag !== 0) {
                                     const creditDeclaratie = {
                                         factuur,
-                                        datum,
+                                        datum: isoDate,
                                         verzekeraar,
                                         origineelFactuur,
                                         bedrag: Math.abs(bedrag), // Altijd positief voor credits
@@ -1102,9 +1472,14 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                                         // Verlaag het bedrag van de originele declaratie
                                         declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag - bedrag);
                                         console.log(`🔄 Credit toegepast: ${origineelFactuur} verlaagd met €${bedrag}`);
+                                    } else {
+                                        console.log(`❌ Geen match gevonden voor originele factuur: ${origineelFactuur}`);
                                     }
                                     
+                                    console.log(`✅ Credit declaratie accepted:`, creditDeclaratie);
                                     parsed.push(creditDeclaratie);
+                                } else {
+                                    console.log(`❌ Credit declaratie rejected:`, { factuur, datum, verzekeraar, origineelFactuur, bedrag, isNaN: isNaN(bedrag), isNotZero: bedrag !== 0, hasFactuur: !!factuur, hasDatum: !!datum, hasVerzekeraar: !!verzekeraar, hasOrigineelFactuur: !!origineelFactuur, hasBedragStr: !!bedragStr });
                                 }
                             }
                         }
@@ -1112,9 +1487,22 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 });
                 
                 // Voeg toe aan credit declaraties array
-                creditDeclaraties.push(...parsed);
+                console.log(`📦 Adding ${parsed.length} credit declaraties to array. Current array length: ${creditDeclaraties.length}`);
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, creditDeclaraties, ['factuur', 'datum', 'bedrag']);
                 
-                showStatus(`✅ ${parsed.length} credit declaraties verwerkt! ${matchedCount} gematcht en toegepast.`, 'success');
+                creditDeclaraties.push(...duplicateCheck.unique);
+                console.log(`📦 New credit declaraties array length: ${creditDeclaraties.length}`);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe credit declaraties verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} credit declaraties verwerkt en opgeslagen! ${matchedCount} gematcht en toegepast.`, 'success');
+                }
                 document.getElementById('credit-declaraties-data').value = '';
                 updatePrognose();
                 updateDataTables();
@@ -1153,12 +1541,15 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                             
                             if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
                                 // Parse bedrag (kan positief of negatief zijn)
-                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
+                                
+                                console.log(`💰 Correctie Facturen - Parsing: "${bedragStr}" -> ${bedrag}, date: "${datum}" -> "${isoDate}"`);
                                 
                                 if (!isNaN(bedrag) && bedrag !== 0) {
                                     const correctieFactuur = {
                                         factuur,
-                                        datum,
+                                        datum: isoDate,
                                         verzekeraar,
                                         origineelFactuur,
                                         bedrag,
@@ -1189,9 +1580,20 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 });
                 
                 // Voeg toe aan correctie facturen array
-                correctieFacturen.push(...parsed);
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, correctieFacturen, ['factuur', 'datum', 'bedrag']);
                 
-                showStatus(`✅ ${parsed.length} correctie facturen verwerkt! ${matchedCount} gematcht en toegepast.`, 'success');
+                correctieFacturen.push(...duplicateCheck.unique);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe correctie facturen verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} correctie facturen verwerkt en opgeslagen! ${matchedCount} gematcht en toegepast.`, 'success');
+                }
                 document.getElementById('correctie-facturen-data').value = '';
                 updatePrognose();
                 updateDataTables();
@@ -1204,8 +1606,12 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
 
         // Verwerk particulier facturen
         function processParticulierFacturen() {
+            console.log('🎯 processParticulierFacturen() aangeroepen');
+            console.log('🔍 Function scope test - this should appear when button is clicked');
             const data = document.getElementById('particulier-facturen-data').value.trim();
+            console.log('📝 Data opgehaald:', data);
             if (!data) {
+                console.log('⚠️ Geen data - functie stopt');
                 showStatus('⚠️ Geen particulier facturen data ingevoerd', 'warning');
                 return;
             }
@@ -1216,10 +1622,13 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 const lines = data.split('\n');
                 const parsed = [];
                 
+                console.log(`📊 Processing ${lines.length} lines:`, lines);
                 lines.forEach((line, index) => {
                     if (line.trim()) {
+                        console.log(`📝 Processing line ${index}: "${line}"`);
                         // Support voor Excel copy-paste (tab-gescheiden)
                         const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        console.log(`🔧 Columns (${columns.length}):`, columns);
                         if (columns.length >= 4) {
                             const factuur = columns[0]?.trim();
                             const datum = columns[1]?.trim();
@@ -1239,20 +1648,28 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                                 }
                                 
                                 // Parse bedrag
-                                const bedrag = parseFloat(bedragStr.replace(/[€\s,]/g, '.').replace(/[^\d.-]/g, ''));
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
+                                
+                                console.log(`💰 Parsing bedrag: "${bedragStr}" -> ${bedrag}`);
+                                console.log(`📅 Date conversion: "${datum}" -> "${isoDate}"`);
                                 
                                 if (!isNaN(bedrag) && bedrag > 0 && debiteur) {
                                     // Particuliere facturen krijgen standaard 14 dagen betaaltermijn
-                                    const verwachteBetaaldatum = new Date(datum);
+                                    const verwachteBetaaldatum = new Date(isoDate);
                                     verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + 14);
+                                    
+                                    console.log(`✅ Parsed item:`, { factuur, datum: isoDate, debiteur, bedrag, verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0] });
                                     
                                     parsed.push({
                                         factuur,
-                                        datum,
+                                        datum: isoDate, // Use ISO format for storage
                                         debiteur,
                                         bedrag,
                                         verwachteBetaaldatum: verwachteBetaaldatum.toISOString().split('T')[0]
                                     });
+                                } else {
+                                    console.log(`❌ Item rejected:`, { factuur, datum, debiteur, bedrag, isNaN: isNaN(bedrag), isPositive: bedrag > 0 });
                                 }
                             }
                         }
@@ -1260,9 +1677,21 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 });
                 
                 // Voeg toe aan particulier facturen array
-                particulierFacturen.push(...parsed);
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, particulierFacturen, ['factuur', 'datum', 'bedrag']);
                 
-                showStatus(`✅ ${parsed.length} particulier facturen verwerkt! Standaard betaaltermijn: 14 dagen.`, 'success');
+                // Voeg alleen unieke items toe
+                particulierFacturen.push(...duplicateCheck.unique);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe particulier facturen verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} particulier facturen verwerkt en opgeslagen! Standaard betaaltermijn: 14 dagen.`, 'success');
+                }
                 document.getElementById('particulier-facturen-data').value = '';
                 updatePrognose();
                 updateDataTables();
@@ -1574,13 +2003,18 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             document.getElementById('status-indicator').innerHTML = 
                 '<span class="text-green-600">✅ Klaar voor gebruik</span>';
             
-            // Initialize date picker with current date
-            const vandaag = new Date();
-            prognoseStartDatum = new Date(vandaag.getFullYear(), vandaag.getMonth(), vandaag.getDate());
-            document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+            // Load saved data first
+            const dataLoaded = loadDataFromStorage();
             
-            // Initialize periode display
-            document.getElementById('prognose-periode-display').textContent = prognosePeriode;
+            // Initialize date picker with current date (if not loaded from storage)
+            if (!dataLoaded) {
+                const vandaag = new Date();
+                prognoseStartDatum = new Date(vandaag.getFullYear(), vandaag.getMonth(), vandaag.getDate());
+                document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+                
+                // Initialize periode display
+                document.getElementById('prognose-periode-display').textContent = prognosePeriode;
+            }
             
             // Update all displays
             updateDisplays();
@@ -1625,6 +2059,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             updateCreditFacturenTable();
             updateCreditDeclaratiesTable();
             updateCorrectieFacturenTable();
+            updateBankmutatiësTable();
             updateCounts();
         }
 
@@ -2004,6 +2439,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             if (confirm('Weet je zeker dat je deze declaratie wilt verwijderen?')) {
                 declaraties.splice(index, 1);
                 updateDataTables();
+                saveDataToStorage();
                 updatePrognose();
                 showStatus('✅ Declaratie verwijderd!', 'success');
             }
@@ -2014,6 +2450,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             if (confirm('Weet je zeker dat je deze vaste kosten wilt verwijderen?')) {
                 vasteKosten.splice(index, 1);
                 updateDataTables();
+                saveDataToStorage();
                 updatePrognose();
                 showStatus('✅ Vaste kosten verwijderd!', 'success');
             }
@@ -2024,6 +2461,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             if (confirm(`Weet je zeker dat je alle ${declaraties.length} declaraties wilt verwijderen?`)) {
                 declaraties = [];
                 updateDataTables();
+                saveDataToStorage();
                 updatePrognose();
                 showStatus('✅ Alle declaraties verwijderd!', 'success');
             }
@@ -2034,6 +2472,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             if (confirm(`Weet je zeker dat je alle ${vasteKosten.length} vaste kosten wilt verwijderen?`)) {
                 vasteKosten = [];
                 updateDataTables();
+                saveDataToStorage();
                 updatePrognose();
                 showStatus('✅ Alle vaste kosten verwijderd!', 'success');
             }
@@ -2127,6 +2566,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 customVerzekeraars = [];
                 updateDataTables();
                 updatePrognose();
+                saveDataToStorage();
                 showStatus('✅ Alle zorgverzekeraars verwijderd! Standaard termijnen worden gebruikt.', 'success');
             }
         }
@@ -2321,6 +2761,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 particulierFacturen = [];
                 updateDataTables();
                 updatePrognose();
+                saveDataToStorage();
                 showStatus('✅ Alle particulier facturen verwijderd!', 'success');
             }
         }
@@ -2365,6 +2806,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             if (confirm(`Weet je zeker dat je alle ${creditFacturen.length} credit facturen wilt verwijderen?`)) {
                 creditFacturen = [];
                 updateDataTables();
+                saveDataToStorage();
                 updatePrognose();
                 showStatus('✅ Alle credit facturen verwijderd!', 'success');
             }
@@ -2381,6 +2823,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 creditDeclaraties = [];
                 updateDataTables();
                 updatePrognose();
+                saveDataToStorage();
                 showStatus('✅ Alle credit declaraties verwijderd en originele bedragen hersteld!', 'success');
             }
         }
@@ -2396,6 +2839,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 correctieFacturen = [];
                 updateDataTables();
                 updatePrognose();
+                saveDataToStorage();
                 showStatus('✅ Alle correctie facturen verwijderd en originele bedragen hersteld!', 'success');
             }
         }
@@ -2624,6 +3068,1634 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
         }
 
         // Start app when DOM is ready
+        // Functions available in global scope for onclick handlers
+        window.processParticulierFacturen = processParticulierFacturen;
+        window.processCreditFacturen = processCreditFacturen;
+        window.processCreditDeclaraties = processCreditDeclaraties;
+        window.processCorrectieFacturen = processCorrectieFacturen;
+
+        // ==================== BANKMUTATIES FUNCTIES ====================
+        
+        // Verwerk bankmutaties (CSV import)
+        function processBankmutaties() {
+            console.log('🏦 processBankmutaties() aangeroepen');
+            const data = document.getElementById('bankmutaties-data').value.trim();
+            console.log('📝 Data opgehaald:', data);
+            
+            if (!data) {
+                showStatus('⚠️ Geen bankmutaties data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Bankmutaties aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                
+                console.log(`📊 Processing ${lines.length} lines`);
+                console.log('🔍 First 3 lines of data:');
+                lines.slice(0, 3).forEach((line, i) => console.log(`  ${i}: "${line}"`));
+                
+                lines.forEach((line, index) => {
+                    const trimmedLine = line.trim();
+                    if (!trimmedLine) {
+                        console.log(`⏭️ Skipping empty line ${index}`);
+                        return;
+                    }
+                    
+                    // Skip header lines more intelligently
+                    const lowerLine = trimmedLine.toLowerCase();
+                    const isHeaderLine = (
+                        lowerLine.includes('datum') && (lowerLine.includes('bedrag') || lowerLine.includes('amount')) ||
+                        lowerLine.includes('date') && lowerLine.includes('amount') ||
+                        (index === 0 && (lowerLine.includes('created') || lowerLine.includes('description')))
+                    );
+                    
+                    if (isHeaderLine) {
+                        console.log(`⏭️ Skipping header line ${index}: "${trimmedLine}"`);
+                        return;
+                    }
+                    
+                    if (trimmedLine) {
+                        console.log(`📝 Processing line ${index}: "${line}"`);
+                        
+                        // Support voor CSV formaat (komma-gescheiden), puntkomma-gescheiden en tab-gescheiden  
+                        let columns;
+                        
+                        // Detect delimiter - prioriteer puntkomma voor BUNQ formaat
+                        if (trimmedLine.split(';').length >= 4) {
+                            // Heeft genoeg puntkomma's - waarschijnlijk BUNQ formaat
+                            columns = trimmedLine.split(';');
+                            console.log(`🔧 Using semicolon delimiter - detected ${columns.length} columns`);
+                        } else if (trimmedLine.includes(',')) {
+                            // Use proper CSV parsing for comma-separated values
+                            columns = parseCSVLine(trimmedLine, ',');
+                            console.log(`🔧 Using comma delimiter - detected ${columns.length} columns`);
+                        } else {
+                            // Tab separated
+                            columns = trimmedLine.split('\t');
+                            console.log(`🔧 Using tab delimiter - detected ${columns.length} columns`);
+                        }
+                        
+                        console.log(`🔧 Columns (${columns.length}):`, columns);
+                        
+                        if (columns.length >= 3) {
+                            // BUNQ formaat heeft andere kolom indeling dan standaard
+                            let datum, bedragStr, omschrijving, tegenrekening;
+                            
+                            if (columns.length === 4 && columns[3] && columns[3].includes('€')) {
+                                // BUNQ formaat: Datum;Omschrijving1;Omschrijving2+Details;Bedrag
+                                datum = columns[0]?.trim().replace(/"/g, '');
+                                const omschrijving1 = columns[1]?.trim().replace(/"/g, '') || '';
+                                const omschrijving2Details = columns[2]?.trim().replace(/"/g, '') || '';
+                                bedragStr = columns[3]?.trim().replace(/"/g, '') || '';
+                                
+                                // Combineer omschrijvingen
+                                omschrijving = [omschrijving1, omschrijving2Details].filter(s => s).join(' - ');
+                                tegenrekening = ''; // BUNQ heeft geen aparte tegenrekening kolom in dit formaat
+                                
+                                console.log(`🏦 BUNQ format detected - 4 columns`);
+                            } else {
+                                // Standaard formaat: Datum,Bedrag,Omschrijving,Tegenrekening
+                                datum = columns[0]?.trim().replace(/"/g, '');
+                                bedragStr = columns[1]?.trim().replace(/"/g, '');
+                                omschrijving = columns[2]?.trim().replace(/"/g, '');
+                                tegenrekening = columns[3]?.trim().replace(/"/g, '') || '';
+                                
+                                console.log(`📊 Standard format - ${columns.length} columns`);
+                            }
+                            
+                            console.log(`🔧 Processing line ${index} with ${columns.length} columns`);
+                            console.log(`    Parsed data: [${datum}] [${bedragStr}] [${omschrijving.substring(0,50)}...] [${tegenrekening}]`);
+                            
+                            if (datum && bedragStr && omschrijving) {
+                                // Parse bedrag met verbeterde cleaning
+                                let cleanBedrag = bedragStr.replace(/[€\s]/g, '');
+                                
+                                // Handle different decimal separators
+                                if (cleanBedrag.includes('.') && cleanBedrag.includes(',')) {
+                                    // Format: 1.234,56 or 1,234.56
+                                    if (cleanBedrag.lastIndexOf(',') > cleanBedrag.lastIndexOf('.')) {
+                                        // European format: 1.234,56
+                                        cleanBedrag = cleanBedrag.replace(/\./g, '').replace(',', '.');
+                                    }
+                                    // else: US format 1,234.56 - keep as is
+                                } else if (cleanBedrag.includes(',')) {
+                                    // Only comma: could be decimal or thousand separator
+                                    const commaIndex = cleanBedrag.indexOf(',');
+                                    const afterComma = cleanBedrag.substring(commaIndex + 1);
+                                    if (afterComma.length <= 2) {
+                                        // Decimal separator: 123,45
+                                        cleanBedrag = cleanBedrag.replace(',', '.');
+                                    } else {
+                                        // Thousand separator: 1,234
+                                        cleanBedrag = cleanBedrag.replace(',', '');
+                                    }
+                                }
+                                
+                                const bedrag = parseFloat(cleanBedrag);
+                                
+                                // Improve date parsing
+                                let isoDate = datum;
+                                if (datum.includes('/')) {
+                                    // Handle MM/DD/YYYY or DD/MM/YYYY
+                                    const parts = datum.split('/');
+                                    if (parts.length === 3) {
+                                        // Assume DD/MM/YYYY (European)
+                                        isoDate = `${parts[2]}-${parts[1].padStart(2, '0')}-${parts[0].padStart(2, '0')}`;
+                                    }
+                                } else if (datum.includes('-')) {
+                                    // Handle DD-MM-YYYY or YYYY-MM-DD
+                                    if (!datum.match(/^\d{4}-\d{2}-\d{2}$/)) {
+                                        isoDate = convertDutchDateToISO(datum) || datum;
+                                    }
+                                }
+                                
+                                console.log(`💰 Parsing bedrag: "${bedragStr}" -> cleaned: "${cleanBedrag}" -> ${bedrag}`);
+                                console.log(`📅 Date conversion: "${datum}" -> "${isoDate}"`);
+                                
+                                // Validate parsed data
+                                if (!isNaN(bedrag) && bedrag !== 0 && isValidDate(isoDate)) {
+                                    parsed.push({
+                                        datum: isoDate,
+                                        bedrag: bedrag,
+                                        omschrijving: omschrijving.substring(0, 200), // Limit length
+                                        tegenrekening: tegenrekening.substring(0, 50), // Limit length
+                                        id: Date.now() + Math.random(),
+                                        matchStatus: 'unmatched', // unmatched, matched, manual
+                                        matchDetails: null
+                                    });
+                                    console.log(`✅ Added bankmutatie: ${isoDate}, ${bedrag}, ${omschrijving.substring(0, 30)}...`);
+                                } else {
+                                    console.warn(`❌ Invalid data on line ${index}:`);
+                                    console.warn(`    Amount: "${bedragStr}" -> ${bedrag} (isNaN: ${isNaN(bedrag)}, isZero: ${bedrag === 0})`);
+                                    console.warn(`    Date: "${datum}" -> "${isoDate}" (isValid: ${isValidDate(isoDate)})`);
+                                    console.warn(`    Description: "${omschrijving}"`);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                if (parsed.length === 0) {
+                    console.log('❌ No valid bankmutaties parsed. Total lines processed:', lines.length);
+                    console.log('🔍 Sample of lines that were processed:');
+                    lines.slice(0, 5).forEach((line, i) => {
+                        console.log(`  Line ${i}: "${line}" (length: ${line.length})`);
+                        if (line.trim()) {
+                            const columns = line.includes(',') ? parseCSVLine(line, ',') : line.split('\t');
+                            console.log(`    Columns (${columns.length}):`, columns);
+                        }
+                    });
+                    showStatus('⚠️ Geen geldige bankmutaties gevonden in de data. Controleer CSV formaat.', 'warning');
+                    return;
+                }
+                
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, bankmutaties, ['datum', 'bedrag', 'omschrijving']);
+                
+                if (duplicateCheck.duplicates.length > 0) {
+                    const message = `⚠️ ${duplicateCheck.duplicates.length} dubbele bankmutaties gevonden en overgeslagen.\n${duplicateCheck.unique.length} nieuwe mutaties toegevoegd.`;
+                    console.log('🔍 Duplicate check results:', duplicateCheck);
+                    showStatus(message, 'warning');
+                } else {
+                    console.log('✅ Geen duplicaten gevonden');
+                }
+                
+                // Voeg alleen unieke items toe
+                bankmutaties = bankmutaties.concat(duplicateCheck.unique);
+                
+                // Sort op datum (nieuwste eerst)
+                bankmutaties.sort((a, b) => new Date(b.datum) - new Date(a.datum));
+                
+                const addedCount = duplicateCheck.unique.length;
+                console.log(`✅ ${addedCount} nieuwe bankmutaties toegevoegd aan database`);
+                console.log('🗄️ Totale bankmutaties:', bankmutaties.length);
+                
+                // Update displays
+                updateDataTables();
+                updatePrognose();
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                // Clear input
+                document.getElementById('bankmutaties-data').value = '';
+                
+                // Reset file input
+                const fileInput = document.getElementById('bankmutaties-file');
+                if (fileInput) fileInput.value = '';
+                
+                // Toon success bericht
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe bankmutaties verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} bankmutaties succesvol verwerkt en opgeslagen`, 'success');
+                }
+                
+                // Auto-reconciliatie als enabled
+                const autoReconcile = document.getElementById('auto-reconcile').checked;
+                if (autoReconcile) {
+                    setTimeout(() => {
+                        console.log('🤖 Starting auto-reconciliation...');
+                        runBankReconciliation();
+                    }, 500);
+                }
+                
+            } catch (error) {
+                console.error('❌ Error in processBankmutaties:', error);
+                showStatus(`❌ Fout bij verwerken bankmutaties: ${error.message}`, 'error');
+            }
+        }
+
+        // Voer bankreconciliatie uit
+        function runBankReconciliation() {
+            console.log('🔍 runBankReconciliation() aangeroepen');
+            console.log(`📊 Available data for matching:`);
+            console.log(`  - Bankmutaties: ${bankmutaties?.length || 0}`);
+            console.log(`  - Declaraties: ${declaraties?.length || 0}`);
+            console.log(`  - Particulier facturen: ${particulierFacturen?.length || 0}`);
+            console.log(`  - Vaste kosten: ${vasteKosten?.length || 0}`);
+            
+            if (!bankmutaties || bankmutaties.length === 0) {
+                showStatus('⚠️ Geen bankmutaties beschikbaar voor reconciliatie', 'warning');
+                return;
+            }
+            
+            // Show sample bankmutaties for debugging
+            console.log(`📝 Sample bankmutaties (first 3):`);
+            bankmutaties.slice(0, 3).forEach((bm, i) => {
+                console.log(`  ${i+1}. ${formatCurrency(bm.bedrag)} - "${bm.omschrijving}" (${bm.datum})`);
+            });
+            
+            // Show sample vaste kosten for debugging
+            if (vasteKosten && vasteKosten.length > 0) {
+                console.log(`💸 Sample vaste kosten (first 3):`);
+                vasteKosten.slice(0, 3).forEach((vk, i) => {
+                    console.log(`  ${i+1}. ${vk.crediteur} - ${formatCurrency(vk.bedrag)} (dag ${vk.betaaldag})`);
+                });
+            }
+            
+            showStatus('🔄 Bank reconciliatie aan het uitvoeren...', 'info');
+            
+            try {
+                const results = {
+                    matched: [],
+                    manualReview: [],
+                    unmatched: [],
+                    suggestions: [] // Nieuwe uitgaven suggesties
+                };
+                
+                // Reset alle match statuses
+                bankmutaties.forEach(bank => {
+                    bank.matchStatus = 'unmatched';
+                    bank.matchDetails = null;
+                });
+                
+                // Voor elke bankmutatie, probeer te matchen
+                bankmutaties.forEach(bankmutatie => {
+                    const matches = findPossibleMatches(bankmutatie);
+                    
+                    console.log(`🔍 Matches voor "${bankmutatie.omschrijving.substring(0,30)}..." (${formatCurrency(bankmutatie.bedrag)}):`, {
+                        exact: matches.exact.length,
+                        fuzzy: matches.fuzzy.length
+                    });
+                    
+                    // Zeer agressieve automatische matching
+                    const allMatches = [...matches.exact, ...matches.fuzzy];
+                    
+                    if (allMatches.length === 0) {
+                        // Geen matches, maar misschien suggesties
+                        if (matches.suggestions && matches.suggestions.length > 0) {
+                            bankmutatie.matchStatus = 'suggestion';
+                            bankmutatie.suggestions = matches.suggestions;
+                            // Flatten suggestions with bankmutatie context
+                            matches.suggestions.forEach(suggestion => {
+                                results.suggestions.push({
+                                    ...suggestion,
+                                    bankmutatie: bankmutatie
+                                });
+                            });
+                            console.log(`💡 Suggestion voor "${bankmutatie.omschrijving.substring(0, 30)}...": ${matches.suggestions[0].type}`);
+                        } else {
+                            results.unmatched.push(bankmutatie);
+                            console.log(`❌ Geen matches of suggesties voor "${bankmutatie.omschrijving.substring(0, 30)}..."`);
+                        }
+                    } else if (allMatches.length === 1) {
+                        // Eén match - ALTIJD accepteren (zelfs low confidence)
+                        const singleMatch = allMatches[0];
+                        bankmutatie.matchStatus = 'matched';
+                        bankmutatie.matchDetails = singleMatch;
+                        results.matched.push({
+                            bankmutatie: bankmutatie,
+                            match: singleMatch
+                        });
+                        console.log(`✅ Auto-matched single: ${singleMatch.item.debiteur || singleMatch.item.verzekeraar || singleMatch.item.crediteur} (${singleMatch.confidence}, ${singleMatch.matchType})`);
+                        
+                        
+                    } else {
+                        // Meerdere matches - probeer de beste te vinden
+                        const bestMatch = allMatches.sort((a, b) => {
+                            // Complexe scoring voor beste match
+                            let scoreA = 0, scoreB = 0;
+                            
+                            // Confidence scoring
+                            const confScore = { 'high': 100, 'medium': 50, 'low': 10 };
+                            scoreA += confScore[a.confidence] || 0;
+                            scoreB += confScore[b.confidence] || 0;
+                            
+                            // Name score (0-100)
+                            scoreA += (a.nameScore || 0) * 100;
+                            scoreB += (b.nameScore || 0) * 100;
+                            
+                            // Match type bonuses
+                            if (a.matchType?.includes('factuurnummer')) scoreA += 200;
+                            if (b.matchType?.includes('factuurnummer')) scoreB += 200;
+                            if (a.matchType?.includes('naam_exact')) scoreA += 150;
+                            if (b.matchType?.includes('naam_exact')) scoreB += 150;
+                            if (a.type === 'vaste_kost') scoreA += 75; // Vaste kosten bonus
+                            if (b.type === 'vaste_kost') scoreB += 75;
+                            
+                            // Dag verschil penalty
+                            scoreA -= (a.daysDiff || 0) * 2;
+                            scoreB -= (b.daysDiff || 0) * 2;
+                            
+                            return scoreB - scoreA;
+                        })[0];
+                        
+                        // ZEER agressievere auto-acceptance criteria
+                        if (bestMatch.matchType?.includes('factuurnummer') ||
+                            (bestMatch.confidence === 'high') ||
+                            (bestMatch.confidence === 'medium' && bestMatch.nameScore >= 0.3) ||
+                            (bestMatch.type === 'vaste_kost') || // Alle vaste kosten accepteren
+                            (bestMatch.nameScore >= 0.7) ||
+                            (bestMatch.matchType === 'bedrag_breed' && allMatches.length <= 3)) { // Zelfs brede matches als er niet teveel zijn
+                            
+                            bankmutatie.matchStatus = 'matched';
+                            bankmutatie.matchDetails = bestMatch;
+                            results.matched.push({
+                                bankmutatie: bankmutatie,
+                                match: bestMatch
+                            });
+                            console.log(`✅ Auto-matched best of multiple: ${bestMatch.item.debiteur || bestMatch.item.verzekeraar || bestMatch.item.crediteur} (score: ${bestMatch.nameScore}, type: ${bestMatch.matchType})`);
+                        } else {
+                            // Naar handmatige review
+                            bankmutatie.matchStatus = 'manual';
+                            bankmutatie.matchDetails = { exactMatches: matches.exact, fuzzyMatches: matches.fuzzy };
+                            results.manualReview.push({ bankmutatie: bankmutatie, possibleMatches: allMatches });
+                            console.log(`⚠️ Multiple matches, manual review needed - best was: ${bestMatch.item.debiteur || bestMatch.item.verzekeraar || bestMatch.item.crediteur} (score: ${bestMatch.nameScore})`);
+                        }
+                    }
+                });
+                
+                console.log('🔍 Reconciliation results:', results);
+                
+                // Update reconciliatie display
+                updateReconciliationDisplay(results);
+                
+                // Toon reconciliatie sectie
+                document.getElementById('reconciliatie-sectie').style.display = 'block';
+                
+                // Update bankmutaties table met match statuses
+                updateBankmutatiësTable();
+                
+                showStatus(`✅ Reconciliatie voltooid: ${results.matched.length} gematched, ${results.manualReview.length} handmatig controleren, ${results.unmatched.length} niet gematched`, 'success');
+                
+            } catch (error) {
+                console.error('❌ Error in runBankReconciliation:', error);
+                showStatus(`❌ Fout bij reconciliatie: ${error.message}`, 'error');
+            }
+        }
+        
+        // Simpele en praktische matching zoals gebruiker voorstelde
+        // Simpele en praktische matching zoals gebruiker voorstelde
+        function findPossibleMatches(bankmutatie) {
+            const exactMatches = [];
+            const fuzzyMatches = [];
+            const suggestions = []; // Voor nieuwe uitgaven suggesties
+            
+            const bankBedrag = Math.abs(bankmutatie.bedrag);
+            const bankOmschrijving = bankmutatie.omschrijving.toLowerCase();
+            const tolerance = 1.00; // €1 tolerantie
+            
+            console.log(`🔍 Simple matching voor: ${formatCurrency(bankmutatie.bedrag)} - "${bankmutatie.omschrijving}"`);
+            
+            if (bankmutatie.bedrag > 0) {
+                // === ONTVANGSTEN: Zoek op factuurnummer + persoonsnaam ===
+                console.log(`💰 Matching inkomst tegen ${declaraties?.length || 0} declaraties en ${particulierFacturen?.length || 0} particulier facturen`);
+                
+                // 1. Zoek factuurnummers in bankomschrijving (10-15 cijfers)
+                const factuurnummerPattern = /\b\d{10,15}\b/g;
+                const gevondenNummers = bankOmschrijving.match(factuurnummerPattern) || [];
+                
+                console.log(`🔢 Gevonden mogelijke factuurnummers:`, gevondenNummers);
+                
+                // Check factuurnummer matches
+                gevondenNummers.forEach(nummer => {
+                    // Check declaraties
+                    declaraties?.forEach(decl => {
+                        if (decl.factuurnummer && decl.factuurnummer.includes(nummer) && Math.abs(parseFloat(decl.bedrag) - bankBedrag) <= tolerance) {
+                            exactMatches.push({
+                                type: 'declaratie',
+                                item: decl,
+                                confidence: 'high',
+                                matchType: 'factuurnummer',
+                                reason: `Factuurnummer ${nummer} + bedrag match`
+                            });
+                            console.log(`✅ Declaratie factuurnummer match: ${decl.verzekeraar} - ${nummer}`);
+                        }
+                    });
+                    
+                    // Check particulier facturen
+                    particulierFacturen?.forEach(fact => {
+                        if (fact.factuur && fact.factuur.includes(nummer) && Math.abs(parseFloat(fact.bedrag) - bankBedrag) <= tolerance) {
+                            exactMatches.push({
+                                type: 'particulier_factuur',
+                                item: fact,
+                                confidence: 'high', 
+                                matchType: 'factuurnummer',
+                                reason: `Factuurnummer ${nummer} + bedrag match`
+                            });
+                            console.log(`✅ Particulier factuurnummer match: ${fact.debiteur} - ${nummer}`);
+                        }
+                    });
+                });
+                
+                // 2. Als geen factuurnummer match, probeer één van de twee: naam óf factuurnummer
+                if (exactMatches.length === 0) {
+                    console.log(`🔍 Geen exacte factuurnummer+bedrag matches, probeer naam matches...`);
+                    
+                    // Check declaraties op verzekeraar naam
+                    declaraties?.forEach(decl => {
+                        const verzekeraarnaam = decl.verzekeraar.toLowerCase();
+                        const naamWoorden = verzekeraarnaam.split(/[\s.,-]+/).filter(w => w.length > 2);
+                        const naamGevonden = naamWoorden.some(woord => bankOmschrijving.includes(woord));
+                        
+                        if (naamGevonden && Math.abs(parseFloat(decl.bedrag) - bankBedrag) <= tolerance) {
+                            exactMatches.push({
+                                type: 'declaratie',
+                                item: decl,
+                                confidence: 'medium',
+                                matchType: 'persoonsnaam',
+                                reason: `Verzekeraar naam "${verzekeraarnaam}" herkend + bedrag match`
+                            });
+                            console.log(`✅ Declaratie naam match: ${verzekeraarnaam}`);
+                        } else if (naamGevonden) {
+                            // Naam match maar bedrag niet exact
+                            fuzzyMatches.push({
+                                type: 'declaratie',
+                                item: decl,
+                                confidence: 'low',
+                                matchType: 'persoonsnaam_fuzzy',
+                                reason: `Verzekeraar naam herkend maar bedrag verschilt (${formatCurrency(Math.abs(parseFloat(decl.bedrag) - bankBedrag))})`
+                            });
+                            console.log(`📝 Declaratie naam fuzzy: ${verzekeraarnaam}`);
+                        }
+                    });
+                    
+                    // Check particulier facturen op debiteur naam
+                    particulierFacturen?.forEach(fact => {
+                        const debiteurNaam = fact.debiteur.toLowerCase();
+                        const naamWoorden = debiteurNaam.split(/[\s.,-]+/).filter(w => w.length > 2);
+                        const naamGevonden = naamWoorden.some(woord => bankOmschrijving.includes(woord));
+                        
+                        if (naamGevonden && Math.abs(parseFloat(fact.bedrag) - bankBedrag) <= tolerance) {
+                            exactMatches.push({
+                                type: 'particulier_factuur',
+                                item: fact,
+                                confidence: 'medium',
+                                matchType: 'persoonsnaam',
+                                reason: `Debiteur naam "${debiteurNaam}" herkend + bedrag match`
+                            });
+                            console.log(`✅ Particulier naam match: ${debiteurNaam}`);
+                        } else if (naamGevonden) {
+                            // Naam match maar bedrag niet exact
+                            fuzzyMatches.push({
+                                type: 'particulier_factuur',
+                                item: fact,
+                                confidence: 'low',
+                                matchType: 'persoonsnaam_fuzzy',
+                                reason: `Debiteur naam herkend maar bedrag verschilt (${formatCurrency(Math.abs(parseFloat(fact.bedrag) - bankBedrag))})`
+                            });
+                            console.log(`📝 Particulier naam fuzzy: ${debiteurNaam}`);
+                        }
+                    });
+                }
+                
+            } else {
+                // === UITGAVEN: Zoek op crediteur naam in vaste kosten ===
+                console.log(`💸 Matching uitgave tegen ${vasteKosten?.length || 0} vaste kosten`);
+                
+                let vasteKostMatch = false;
+                
+                vasteKosten?.forEach(kost => {
+                    const kostBedrag = parseFloat(kost.bedrag);
+                    const crediteurNaam = kost.crediteur.toLowerCase();
+                    
+                    // Zoek crediteur naam woorden in bankomschrijving
+                    const naamWoorden = crediteurNaam.split(/[\s.,-]+/).filter(w => w.length > 2);
+                    const naamGevonden = naamWoorden.some(woord => bankOmschrijving.includes(woord));
+                    
+                    if (naamGevonden && Math.abs(kostBedrag - bankBedrag) <= tolerance) {
+                        exactMatches.push({
+                            type: 'vaste_kost',
+                            item: kost,
+                            confidence: 'high',
+                            matchType: 'crediteur_naam',
+                            reason: `Crediteur "${crediteurNaam}" herkend + bedrag match`
+                        });
+                        vasteKostMatch = true;
+                        console.log(`✅ Vaste kost exact match: ${crediteurNaam}`);
+                    } else if (naamGevonden) {
+                        // Naam herkend maar bedrag verschilt
+                        fuzzyMatches.push({
+                            type: 'vaste_kost',
+                            item: kost,
+                            confidence: 'medium',
+                            matchType: 'crediteur_naam_fuzzy',
+                            reason: `Crediteur naam herkend maar bedrag verschilt (${formatCurrency(Math.abs(kostBedrag - bankBedrag))})`
+                        });
+                        console.log(`📝 Vaste kost fuzzy match: ${crediteurNaam}`);
+                    } else if (Math.abs(kostBedrag - bankBedrag) <= tolerance) {
+                        // Zelfde bedrag, maar naam niet herkend
+                        fuzzyMatches.push({
+                            type: 'vaste_kost',
+                            item: kost,
+                            confidence: 'low',
+                            matchType: 'bedrag_only',
+                            reason: `Zelfde bedrag maar crediteur naam niet herkend`
+                        });
+                        console.log(`📝 Mogelijke vaste kost (bedrag): ${crediteurNaam}`);
+                    }
+                });
+                
+                // Als geen bekende vaste kost gevonden, suggest nieuwe uitgave
+                if (exactMatches.length === 0 && fuzzyMatches.length === 0) {
+                    suggestions.push({
+                        type: 'nieuwe_vaste_uitgave',
+                        amount: bankBedrag,
+                        description: bankmutatie.omschrijving,
+                        datum: bankmutatie.datum,
+                        reason: 'Geen bekende vaste kost gevonden - suggestie nieuwe vaste uitgave'
+                    });
+                    console.log(`💡 Suggest nieuwe vaste uitgave: ${formatCurrency(bankBedrag)} voor "${bankmutatie.omschrijving}"`);
+                }
+            }
+            
+            console.log(`🔍 Simple matching resultaat voor "${bankmutatie.omschrijving.substring(0,30)}...": exact=${exactMatches.length}, fuzzy=${fuzzyMatches.length}, suggestions=${suggestions.length}`);
+            return { 
+                exact: exactMatches, 
+                fuzzy: fuzzyMatches,
+                suggestions: suggestions
+            };
+        }        
+        // Update reconciliatie display
+        function updateReconciliationDisplay(results) {
+            // Update samenvatting cijfers
+            document.getElementById('matched-count').textContent = results.matched.length;
+            document.getElementById('manual-count').textContent = results.manualReview.length;
+            document.getElementById('unmatched-count').textContent = results.unmatched.length;
+            document.getElementById('suggestions-count').textContent = results.suggestions?.length || 0;
+            
+            const matchedAmount = results.matched.reduce((sum, item) => sum + Math.abs(item.bankmutatie.bedrag), 0);
+            const manualAmount = results.manualReview.reduce((sum, item) => sum + Math.abs(item.bankmutatie.bedrag), 0);
+            const unmatchedAmount = results.unmatched.reduce((sum, item) => sum + Math.abs(item.bedrag), 0);
+            const suggestionsAmount = results.suggestions?.reduce((sum, item) => sum + Math.abs(item.amount), 0) || 0;
+            
+            document.getElementById('matched-amount').textContent = formatCurrency(matchedAmount);
+            document.getElementById('manual-amount').textContent = formatCurrency(manualAmount);
+            document.getElementById('unmatched-amount').textContent = formatCurrency(unmatchedAmount);
+            document.getElementById('suggestions-amount').textContent = formatCurrency(suggestionsAmount);
+            
+            // Update tabellen
+            updateMatchedTable(results.matched);
+            updateManualReviewTable(results.manualReview);
+            updateUnmatchedTable(results.unmatched);
+            updateSuggestionsTable(results.suggestions || []);
+            
+            // Toon/verberg secties
+            document.getElementById('matched-section').style.display = results.matched.length > 0 ? 'block' : 'none';
+            document.getElementById('manual-review-section').style.display = results.manualReview.length > 0 ? 'block' : 'none';
+            document.getElementById('unmatched-section').style.display = results.unmatched.length > 0 ? 'block' : 'none';
+            document.getElementById('suggestions-section').style.display = results.suggestions?.length > 0 ? 'block' : 'none';
+            
+            document.getElementById('matched-total').textContent = results.matched.length;
+        }
+        
+        // Update gematched tabel
+        function updateMatchedTable(matched) {
+            const tbody = document.getElementById('matched-body');
+            tbody.innerHTML = matched.map(item => `
+                <tr>
+                    <td class="px-4 py-2 text-sm text-gray-900">${formatDate(item.bankmutatie.datum)}</td>
+                    <td class="px-4 py-2 text-sm ${item.bankmutatie.bedrag >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(item.bankmutatie.bedrag)}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">${item.bankmutatie.omschrijving}</td>
+                    <td class="px-4 py-2 text-sm text-blue-600">
+                        ${item.match.type}: ${item.match.item.factuurnummer || item.match.item.crediteur || item.match.item.debiteur || 'N/A'}
+                        (${formatCurrency(item.match.item.bedrag)})
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Update handmatige review tabel
+        function updateManualReviewTable(manualReview) {
+            const tbody = document.getElementById('manual-review-body');
+            tbody.innerHTML = manualReview.map(item => `
+                <tr class="border-b border-yellow-200">
+                    <td class="px-4 py-3 text-sm text-gray-900">${formatDate(item.bankmutatie.datum)}</td>
+                    <td class="px-4 py-3 text-sm ${item.bankmutatie.bedrag >= 0 ? 'text-green-600' : 'text-red-600'} font-medium">${formatCurrency(item.bankmutatie.bedrag)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                        <div class="truncate" title="${item.bankmutatie.omschrijving}">${item.bankmutatie.omschrijving}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="space-y-2 max-h-32 overflow-y-auto">
+                            ${item.possibleMatches.map((match, matchIndex) => {
+                                const confidenceColor = {
+                                    'high': 'bg-green-100 border-green-300 text-green-800',
+                                    'medium': 'bg-yellow-100 border-yellow-300 text-yellow-800', 
+                                    'low': 'bg-red-100 border-red-300 text-red-800'
+                                }[match.confidence] || 'bg-gray-100 border-gray-300';
+                                
+                                const matchTypeLabel = {
+                                    'factuurnummer_match': '🔢 Factuurnummer',
+                                    'naam_exact': '👤 Naam exact',
+                                    'naam_fuzzy': '👤 Naam gedeeltelijk',
+                                    'bedrag_only': '💰 Alleen bedrag'
+                                }[match.matchType] || '❓ Onbekend';
+                                
+                                return `<div class="border rounded p-2 ${confidenceColor}">
+                                    <div class="flex justify-between items-start mb-1">
+                                        <div class="font-medium text-xs">${match.item.debiteur || match.item.crediteur || 'N/A'}</div>
+                                        <div class="text-xs opacity-75">${matchTypeLabel}</div>
+                                    </div>
+                                    <div class="text-xs mb-2">
+                                        ${formatCurrency(match.item.bedrag)}
+                                        ${match.daysDiff ? `• ${match.daysDiff}d geleden` : ''}
+                                        ${match.nameScore ? `• Score: ${Math.round(match.nameScore * 100)}%` : ''}
+                                    </div>
+                                    <button onclick="selectSpecificMatch('${item.bankmutatie.id}', ${matchIndex})" 
+                                            class="w-full px-2 py-1 bg-white bg-opacity-50 hover:bg-opacity-80 rounded text-xs font-medium transition-colors">
+                                        ✅ Selecteer Deze Match
+                                    </button>
+                                </div>`;
+                            }).join('')}
+                        </div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="space-y-1">
+                            <button onclick="selectBestMatch('${item.bankmutatie.id}')" class="block w-full px-2 py-1 bg-blue-100 text-blue-800 hover:bg-blue-200 rounded text-xs font-medium transition-colors">
+                                ⭐ Beste Match
+                            </button>
+                            <button onclick="skipMatch('${item.bankmutatie.id}')" class="block w-full px-2 py-1 bg-gray-100 text-gray-600 hover:bg-gray-200 rounded text-xs">
+                                ⏭️ Overslaan
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Update niet gematched tabel  
+        function updateUnmatchedTable(unmatched) {
+            const tbody = document.getElementById('unmatched-body');
+            tbody.innerHTML = unmatched.map(item => `
+                <tr>
+                    <td class="px-4 py-2 text-sm text-gray-900">${formatDate(item.datum)}</td>
+                    <td class="px-4 py-2 text-sm ${item.bedrag >= 0 ? 'text-green-600' : 'text-red-600'}">${formatCurrency(item.bedrag)}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600">${item.omschrijving}</td>
+                    <td class="px-4 py-2 text-sm text-gray-500">${item.bedrag >= 0 ? 'Inkomst' : 'Uitgave'}</td>
+                </tr>
+            `).join('');
+        }
+        
+        // Update suggesties tabel
+        function updateSuggestionsTable(suggestions) {
+            const tbody = document.getElementById('suggestions-body');
+            tbody.innerHTML = suggestions.map(suggestion => `
+                <tr>
+                    <td class="px-4 py-2 text-sm text-gray-900">${formatDate(suggestion.datum)}</td>
+                    <td class="px-4 py-2 text-sm text-red-600">-${formatCurrency(suggestion.amount)}</td>
+                    <td class="px-4 py-2 text-sm text-gray-600 max-w-xs truncate" title="${suggestion.description}">${suggestion.description}</td>
+                    <td class="px-4 py-2 text-sm text-purple-600">${suggestion.reason}</td>
+                    <td class="px-4 py-2 text-sm">
+                        <div class="flex space-x-2">
+                            <button 
+                                onclick="acceptSuggestion('${suggestion.datum}', ${suggestion.amount}, '${suggestion.description.replace(/'/g, "\\'")}')"
+                                class="px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition-colors"
+                                title="Toevoegen als nieuwe vaste uitgave"
+                            >
+                                ✓ Toevoegen
+                            </button>
+                            <button 
+                                onclick="ignoreSuggestion('${suggestion.datum}', '${suggestion.description.replace(/'/g, "\\'")}')"
+                                class="px-3 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500 transition-colors"
+                                title="Negeren (niet opslaan)"
+                            >
+                                ✖ Negeren
+                            </button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+        
+        // Toggle matched details
+        function toggleMatchedDetails() {
+            const details = document.getElementById('matched-details');
+            const icon = document.getElementById('matched-toggle-icon');
+            
+            if (details.classList.contains('hidden')) {
+                details.classList.remove('hidden');
+                icon.textContent = '▲';
+            } else {
+                details.classList.add('hidden');
+                icon.textContent = '▼';
+            }
+        }
+        
+        // Accepteer suggestie en voeg toe als nieuwe vaste uitgave
+        function acceptSuggestion(datum, amount, description) {
+            console.log(`💾 Accepteren suggestie: ${formatCurrency(amount)} voor "${description}"`);
+            
+            // Extract crediteur naam uit beschrijving (eerste paar woorden)
+            const words = description.trim().split(/\s+/);
+            const crediteur = words.slice(0, Math.min(3, words.length)).join(' ');
+            
+            // Nieuwe vaste uitgave object
+            const nieuweVasteUitgave = {
+                id: Date.now().toString(),
+                crediteur: crediteur,
+                bedrag: amount,
+                betaaldag: new Date(datum).getDate(),
+                categorie: 'Overig',
+                beschrijving: `Automatisch toegevoegd van banktransactie: ${description}`,
+                actief: true
+            };
+            
+            // Toevoegen aan vaste kosten array
+            vasteKosten.push(nieuweVasteUitgave);
+            
+            // Opslaan in localStorage
+            saveDataToStorage();
+            
+            // Success bericht
+            showStatus(`✅ Nieuwe vaste uitgave toegevoegd: ${crediteur} - ${formatCurrency(amount)}`, 'success');
+            
+            // Herrun reconciliation om de nieuwe match te vinden
+            performBankReconciliation();
+            
+            // Update data beheer tabellen
+            updateDataTables();
+            
+            console.log('🎉 Suggestie succesvol geaccepteerd en vaste uitgave toegevoegd!');
+        }
+        
+        // Negeer suggestie (doe niets)
+        function ignoreSuggestion(datum, description) {
+            console.log(`🙅 Negeren suggestie voor: "${description}"`);
+            
+            showStatus(`🙅 Suggestie genegeerd voor: ${description.substring(0, 30)}...`, 'info');
+            
+            // Herrun reconciliation om de suggestie te verwijderen uit de lijst
+            performBankReconciliation();
+        }
+        
+        // Selecteer een specifieke match uit de opties
+        function selectSpecificMatch(bankmutatieid, matchIndex) {
+            const bankmutatie = bankmutaties.find(b => b.id == bankmutatieid);
+            if (!bankmutatie || !bankmutatie.matchDetails) return;
+            
+            const allMatches = [...bankmutatie.matchDetails.exactMatches, ...bankmutatie.matchDetails.fuzzyMatches];
+            const selectedMatch = allMatches[matchIndex];
+            
+            if (selectedMatch) {
+                bankmutatie.matchStatus = 'matched';
+                bankmutatie.matchDetails = selectedMatch;
+                
+                console.log('✅ Specific match selected:', selectedMatch);
+                
+                // Herrun reconciliatie om display te updaten
+                setTimeout(() => runBankReconciliation(), 100);
+                
+                showStatus(`✅ Match geselecteerd: ${selectedMatch.item.debiteur || selectedMatch.item.crediteur}`, 'success');
+            }
+        }
+        
+        // Selecteer automatisch de beste match
+        function selectBestMatch(bankmutatieid) {
+            const bankmutatie = bankmutaties.find(b => b.id == bankmutatieid);
+            if (!bankmutatie || !bankmutatie.matchDetails) return;
+            
+            // Zoek de match met de hoogste confidence score
+            const allMatches = [...bankmutatie.matchDetails.exactMatches, ...bankmutatie.matchDetails.fuzzyMatches];
+            
+            // Sorteer op confidence en naam score
+            const bestMatch = allMatches.sort((a, b) => {
+                const scoreA = (a.confidence === 'high' ? 3 : a.confidence === 'medium' ? 2 : 1) + (a.nameScore || 0);
+                const scoreB = (b.confidence === 'high' ? 3 : b.confidence === 'medium' ? 2 : 1) + (b.nameScore || 0);
+                return scoreB - scoreA;
+            })[0];
+            
+            if (bestMatch) {
+                bankmutatie.matchStatus = 'matched';
+                bankmutatie.matchDetails = bestMatch;
+                
+                console.log('⭐ Best match selected:', bestMatch);
+                
+                // Herrun reconciliatie om display te updaten
+                setTimeout(() => runBankReconciliation(), 100);
+                
+                showStatus(`⭐ Beste match geselecteerd: ${bestMatch.item.debiteur || bestMatch.item.crediteur}`, 'success');
+            }
+        }
+        
+        // Skip deze match (markeer als unmatched)
+        function skipMatch(bankmutatieid) {
+            const bankmutatie = bankmutaties.find(b => b.id == bankmutatieid);
+            if (bankmutatie) {
+                bankmutatie.matchStatus = 'unmatched';
+                bankmutatie.matchDetails = null;
+                
+                console.log('⏭️ Match skipped for:', bankmutatie.omschrijving);
+                
+                // Herrun reconciliatie om display te updaten
+                setTimeout(() => runBankReconciliation(), 100);
+                
+                showStatus('⏭️ Match overgeslagen', 'info');
+            }
+        }
+        
+        // Auto-match alle handmatige reviews met hoge confidence
+        function autoMatchAll() {
+            if (!bankmutaties || bankmutaties.length === 0) {
+                showStatus('⚠️ Geen bankmutaties beschikbaar', 'warning');
+                return;
+            }
+            
+            let matchedCount = 0;
+            const manualReviewItems = bankmutaties.filter(b => b.matchStatus === 'manual' && b.matchDetails);
+            
+            if (manualReviewItems.length === 0) {
+                showStatus('ℹ️ Geen handmatige reviews beschikbaar voor auto-matching', 'info');
+                return;
+            }
+            
+            console.log(`🤖 Starting auto-match for ${manualReviewItems.length} manual review items`);
+            
+            manualReviewItems.forEach(bankmutatie => {
+                const allMatches = [...bankmutatie.matchDetails.exactMatches, ...bankmutatie.matchDetails.fuzzyMatches];
+                
+                // Sorteer op confidence en naam score
+                const bestMatch = allMatches.sort((a, b) => {
+                    const confidenceScore = { 'high': 3, 'medium': 2, 'low': 1 };
+                    const scoreA = (confidenceScore[a.confidence] || 0) * 10 + (a.nameScore || 0);
+                    const scoreB = (confidenceScore[b.confidence] || 0) * 10 + (b.nameScore || 0);
+                    return scoreB - scoreA;
+                })[0];
+                
+                // Auto-accepteer alleen matches met hoge confidence of zeer hoge naam score
+                if (bestMatch && (
+                    bestMatch.confidence === 'high' ||
+                    (bestMatch.nameScore >= 0.8) ||
+                    bestMatch.matchType === 'factuurnummer_match'
+                )) {
+                    bankmutatie.matchStatus = 'matched';
+                    bankmutatie.matchDetails = bestMatch;
+                    matchedCount++;
+                    
+                    console.log(`✅ Auto-matched: ${bestMatch.item.debiteur || bestMatch.item.verzekeraar} (confidence: ${bestMatch.confidence}, score: ${bestMatch.nameScore})`);
+                }
+            });
+            
+            if (matchedCount > 0) {
+                // Herrun reconciliatie om display te updaten
+                setTimeout(() => runBankReconciliation(), 100);
+                showStatus(`🤖 ${matchedCount} transacties automatisch gematched van ${manualReviewItems.length} handmatige reviews`, 'success');
+            } else {
+                showStatus('🤖 Geen geschikte matches gevonden voor automatische matching', 'info');
+            }
+        }
+        
+        // Zeer agressieve auto-match - accepteert bijna alles met enige match
+        function aggressiveAutoMatch() {
+            if (!bankmutaties || bankmutaties.length === 0) {
+                showStatus('⚠️ Geen bankmutaties beschikbaar', 'warning');
+                return;
+            }
+            
+            let matchedCount = 0;
+            const manualReviewItems = bankmutaties.filter(b => b.matchStatus === 'manual' && b.matchDetails);
+            
+            if (manualReviewItems.length === 0) {
+                showStatus('ℹ️ Geen handmatige reviews beschikbaar voor agressieve matching', 'info');
+                return;
+            }
+            
+            console.log(`🚀 Starting aggressive auto-match for ${manualReviewItems.length} manual review items`);
+            
+            manualReviewItems.forEach(bankmutatie => {
+                const allMatches = [...bankmutatie.matchDetails.exactMatches, ...bankmutatie.matchDetails.fuzzyMatches];
+                
+                if (allMatches.length > 0) {
+                    // Sorteer op confidence en naam score
+                    const bestMatch = allMatches.sort((a, b) => {
+                        const confidenceScore = { 'high': 3, 'medium': 2, 'low': 1 };
+                        const scoreA = (confidenceScore[a.confidence] || 0) * 10 + (a.nameScore || 0) * 5 + (a.type === 'vaste_kost' ? 2 : 0);
+                        const scoreB = (confidenceScore[b.confidence] || 0) * 10 + (b.nameScore || 0) * 5 + (b.type === 'vaste_kost' ? 2 : 0);
+                        return scoreB - scoreA;
+                    })[0];
+                    
+                    // Accepteer bijna alles behalve zeer lage confidence zonder naam match
+                    if (!(bestMatch.confidence === 'low' && (bestMatch.nameScore || 0) < 0.2)) {
+                        bankmutatie.matchStatus = 'matched';
+                        bankmutatie.matchDetails = bestMatch;
+                        matchedCount++;
+                        
+                        console.log(`🚀 Aggressively matched: ${bestMatch.item.debiteur || bestMatch.item.verzekeraar || bestMatch.item.crediteur} (confidence: ${bestMatch.confidence}, score: ${bestMatch.nameScore})`);
+                    }
+                }
+            });
+            
+            if (matchedCount > 0) {
+                // Herrun reconciliatie om display te updaten
+                setTimeout(() => runBankReconciliation(), 100);
+                showStatus(`🚀 ${matchedCount} transacties agressief gematched van ${manualReviewItems.length} handmatige reviews`, 'success');
+            } else {
+                showStatus('🚀 Geen matches gevonden (zelfs niet agressief)', 'info');
+            }
+        }
+        
+        // Debug matching - show detailed info about first few unmatched items
+        function debugMatching() {
+            console.log('🐛 === DEBUG MATCHING ANALYSIS ===');
+            
+            const unmatchedItems = bankmutaties.filter(b => b.matchStatus === 'unmatched').slice(0, 5);
+            
+            if (unmatchedItems.length === 0) {
+                console.log('✅ No unmatched items to debug');
+                showStatus('✅ Geen unmatched items om te debuggen', 'info');
+                return;
+            }
+            
+            console.log(`🔍 Analyzing ${unmatchedItems.length} unmatched items:`);
+            
+            unmatchedItems.forEach((bankmutatie, index) => {
+                console.log(`\n--- UNMATCHED ITEM ${index + 1} ---`);
+                console.log(`Amount: ${formatCurrency(bankmutatie.bedrag)} (${bankmutatie.bedrag > 0 ? 'INCOME' : 'EXPENSE'})`);
+                console.log(`Date: ${bankmutatie.datum}`);
+                console.log(`Description: "${bankmutatie.omschrijving}"`);
+                
+                // Manual matching attempt
+                const matches = findPossibleMatches(bankmutatie);
+                console.log(`Found matches: exact=${matches.exact.length}, fuzzy=${matches.fuzzy.length}`);
+                
+                if (matches.exact.length === 0 && matches.fuzzy.length === 0) {
+                    console.log('❌ NO MATCHES FOUND AT ALL');
+                    
+                    // Show what we're comparing against
+                    if (bankmutatie.bedrag > 0) {
+                        console.log(`📊 Available declaraties to compare: ${declaraties.length}`);
+                        console.log(`📊 Available particulier facturen to compare: ${particulierFacturen.length}`);
+                        
+                        if (declaraties.length > 0) {
+                            const sampleDecl = declaraties[0];
+                            console.log(`   Sample declaratie: ${sampleDecl.verzekeraar} - ${formatCurrency(sampleDecl.bedrag)} (${sampleDecl.betaaldatum})`);
+                        }
+                        if (particulierFacturen.length > 0) {
+                            const samplePart = particulierFacturen[0];
+                            console.log(`   Sample particulier: ${samplePart.debiteur} - ${formatCurrency(samplePart.bedrag)} (${samplePart.datum})`);
+                        }
+                    } else {
+                        console.log(`📊 Available vaste kosten to compare: ${vasteKosten.length}`);
+                        if (vasteKosten.length > 0) {
+                            const sampleVK = vasteKosten[0];
+                            console.log(`   Sample vaste kost: ${sampleVK.crediteur} - ${formatCurrency(sampleVK.bedrag)} (dag ${sampleVK.betaaldag})`);
+                        }
+                    }
+                }
+            });
+            
+            showStatus(`🐛 Debug info gelogd voor ${unmatchedItems.length} unmatched items - check console`, 'info');
+        }
+        
+        // Handmatige match accepteren (legacy functie voor backwards compatibility)
+        function manualMatch(bankmutatieid) {
+            selectBestMatch(bankmutatieid);
+        }
+        
+        // Delete alle bankmutaties
+        function deleteAllBankmutaties() {
+            if (confirm('Weet je zeker dat je alle bankmutaties wilt verwijderen?')) {
+                bankmutaties = [];
+                updateDataTables();
+                
+                // Save to storage - IMPORTANT!
+                saveDataToStorage();
+                
+                // Verberg reconciliatie sectie
+                document.getElementById('reconciliatie-sectie').style.display = 'none';
+                
+                showStatus('🗑️ Alle bankmutaties verwijderd en opgeslagen', 'info');
+            }
+        }
+        
+        // Update bankmutaties tabel
+        function updateBankmutatiësTable() {
+            const tbody = document.getElementById('bankmutaties-table-body');
+            const noDataDiv = document.getElementById('no-bankmutaties');
+            
+            if (!bankmutaties || bankmutaties.length === 0) {
+                tbody.innerHTML = '';
+                noDataDiv.style.display = 'block';
+                document.getElementById('bankmutaties-count').textContent = '0';
+                return;
+            }
+            
+            noDataDiv.style.display = 'none';
+            document.getElementById('bankmutaties-count').textContent = bankmutaties.length;
+            
+            tbody.innerHTML = bankmutaties.map(item => {
+                const matchStatusBadge = getMatchStatusBadge(item.matchStatus);
+                const amountClass = item.bedrag >= 0 ? 'text-green-600 font-medium' : 'text-red-600 font-medium';
+                
+                return `
+                    <tr>
+                        <td class="px-4 py-3 text-sm text-gray-900">${formatDate(item.datum)}</td>
+                        <td class="px-4 py-3 text-sm ${amountClass}">${formatCurrency(item.bedrag)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600">${item.omschrijving}</td>
+                        <td class="px-4 py-3 text-sm text-gray-500 font-mono">${item.tegenrekening}</td>
+                        <td class="px-4 py-3 text-sm">${matchStatusBadge}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <button onclick="deleteBankmutatie('${item.id}')" class="text-red-600 hover:text-red-800">
+                                🗑️ Verwijderen
+                            </button>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+        }
+        
+        // Get match status badge
+        function getMatchStatusBadge(status) {
+            switch(status) {
+                case 'matched':
+                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">✅ Gematched</span>';
+                case 'manual':
+                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800">⚠️ Handmatig</span>';
+                case 'unmatched':
+                default:
+                    return '<span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">❌ Niet gematched</span>';
+            }
+        }
+        
+        // Delete specifieke bankmutatie
+        function deleteBankmutatie(id) {
+            if (confirm('Weet je zeker dat je deze bankmutatie wilt verwijderen?')) {
+                bankmutaties = bankmutaties.filter(item => item.id != id);
+                updateBankmutatiësTable();
+                saveDataToStorage();
+                showStatus('🗑️ Bankmutatie verwijderd en opgeslagen', 'info');
+                
+                // Re-run reconciliatie als er nog mutaties zijn
+                if (bankmutaties && bankmutaties.length > 0) {
+                    setTimeout(() => runBankReconciliation(), 100);
+                } else {
+                    document.getElementById('reconciliatie-sectie').style.display = 'none';
+                }
+            }
+        }
+        
+        // Export functies naar window object
+        window.processBankmutaties = processBankmutaties;
+        window.runBankReconciliation = runBankReconciliation;
+        window.deleteAllBankmutaties = deleteAllBankmutaties;
+        window.toggleMatchedDetails = toggleMatchedDetails;
+        window.manualMatch = manualMatch;
+        window.selectSpecificMatch = selectSpecificMatch;
+        window.selectBestMatch = selectBestMatch;
+        window.skipMatch = skipMatch;
+        window.autoMatchAll = autoMatchAll;
+        window.aggressiveAutoMatch = aggressiveAutoMatch;
+        window.debugMatching = debugMatching;
+        window.deleteBankmutatie = deleteBankmutatie;
+
+        // ==================== DATA PERSISTENTIE & FILE UPLOAD ====================
+        
+        // Data opslaan in localStorage
+        function saveDataToStorage() {
+            try {
+                const dataToSave = {
+                    version: '1.0',
+                    timestamp: new Date().toISOString(),
+                    data: {
+                        declaraties: declaraties,
+                        vasteKosten: vasteKosten,
+                        customVerzekeraars: customVerzekeraars,
+                        particulierFacturen: particulierFacturen,
+                        creditFacturen: creditFacturen,
+                        creditDeclaraties: creditDeclaraties,
+                        correctieFacturen: correctieFacturen,
+                        bankmutaties: bankmutaties,
+                        huidigBanksaldo: huidigBanksaldo,
+                        prognosePeriode: prognosePeriode,
+                        prognoseStartDatum: prognoseStartDatum.toISOString()
+                    }
+                };
+                
+                localStorage.setItem('cashflow-app-data', JSON.stringify(dataToSave));
+                console.log('💾 Data opgeslagen in localStorage');
+                return true;
+            } catch (error) {
+                console.error('❌ Fout bij opslaan data:', error);
+                showStatus('⚠️ Kon data niet opslaan in browser', 'warning');
+                return false;
+            }
+        }
+        
+        // Data laden uit localStorage
+        function loadDataFromStorage() {
+            try {
+                const savedData = localStorage.getItem('cashflow-app-data');
+                if (!savedData) {
+                    console.log('📂 Geen opgeslagen data gevonden');
+                    return false;
+                }
+                
+                const parsed = JSON.parse(savedData);
+                if (!parsed.data) {
+                    console.log('📂 Geen geldige data structuur gevonden');
+                    return false;
+                }
+                
+                // Herstel alle data arrays
+                declaraties = parsed.data.declaraties || [];
+                vasteKosten = parsed.data.vasteKosten || [];
+                customVerzekeraars = parsed.data.customVerzekeraars || [];
+                particulierFacturen = parsed.data.particulierFacturen || [];
+                creditFacturen = parsed.data.creditFacturen || [];
+                creditDeclaraties = parsed.data.creditDeclaraties || [];
+                correctieFacturen = parsed.data.correctieFacturen || [];
+                bankmutaties = parsed.data.bankmutaties || [];
+                
+                // Herstel instellingen
+                if (parsed.data.huidigBanksaldo !== undefined) {
+                    huidigBanksaldo = parsed.data.huidigBanksaldo;
+                    document.getElementById('banksaldo-input').value = huidigBanksaldo;
+                    document.getElementById('saldo-display').textContent = 
+                        `€ ${huidigBanksaldo.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`;
+                }
+                
+                if (parsed.data.prognosePeriode !== undefined) {
+                    prognosePeriode = parsed.data.prognosePeriode;
+                    document.getElementById('prognose-periode-input').value = prognosePeriode;
+                    document.getElementById('prognose-periode-display').textContent = prognosePeriode;
+                }
+                
+                if (parsed.data.prognoseStartDatum) {
+                    prognoseStartDatum = new Date(parsed.data.prognoseStartDatum);
+                    document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
+                }
+                
+                console.log(`📂 Data geladen uit localStorage - ${parsed.timestamp}`);
+                console.log(`📊 Geladen: ${declaraties.length} declaraties, ${bankmutaties.length} bankmutaties, ${vasteKosten.length} vaste kosten`);
+                
+                showStatus('✅ Opgeslagen data hersteld', 'success');
+                return true;
+            } catch (error) {
+                console.error('❌ Fout bij laden data:', error);
+                showStatus('⚠️ Kon opgeslagen data niet laden', 'warning');
+                return false;
+            }
+        }
+        
+        // Data wissen uit localStorage
+        function clearStoredData() {
+            try {
+                localStorage.removeItem('cashflow-app-data');
+                console.log('🗑️ Opgeslagen data gewist');
+                showStatus('🗑️ Alle opgeslagen data gewist', 'info');
+            } catch (error) {
+                console.error('❌ Fout bij wissen data:', error);
+            }
+        }
+        
+        // Confirm and clear data (with user confirmation)
+        function confirmAndClearData() {
+            if (confirm('Weet je zeker dat je alle opgeslagen data wilt wissen?\n\nDit kan niet ongedaan gemaakt worden!')) {
+                clearStoredData();
+            }
+        }
+        
+        // Check for duplicate entries
+        function findDuplicates(newItems, existingArray, compareFields) {
+            const duplicates = [];
+            const unique = [];
+            
+            newItems.forEach(newItem => {
+                const isDuplicate = existingArray.some(existingItem => {
+                    return compareFields.every(field => {
+                        const newValue = String(newItem[field]).trim().toLowerCase();
+                        const existingValue = String(existingItem[field]).trim().toLowerCase();
+                        return newValue === existingValue;
+                    });
+                });
+                
+                if (isDuplicate) {
+                    duplicates.push(newItem);
+                } else {
+                    unique.push(newItem);
+                }
+            });
+            
+            return { duplicates, unique };
+        }
+        
+        // Handle bank file upload
+        function handleBankFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            console.log('📁 Bank bestand geselecteerd:', file.name, 'Size:', file.size, 'Type:', file.type);
+            
+            if (!file.name.toLowerCase().endsWith('.csv') && !file.name.toLowerCase().endsWith('.txt')) {
+                showStatus('⚠️ Alleen CSV en TXT bestanden worden ondersteund', 'warning');
+                return;
+            }
+            
+            showStatus('🔄 Bestand aan het inlezen...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    let content = e.target.result;
+                    
+                    console.log('📁 Original file content (first 500 chars):', content.substring(0, 500));
+                    
+                    // BUNQ format detection and conversion
+                    const convertedContent = detectAndConvertBankFormat(content);
+                    
+                    if (convertedContent !== content) {
+                        console.log('🔄 Content was converted by format detection');
+                        console.log('📁 Converted content (first 500 chars):', convertedContent.substring(0, 500));
+                    } else {
+                        console.log('📁 No format conversion applied');
+                    }
+                    
+                    // Zet inhoud in textarea
+                    document.getElementById('bankmutaties-data').value = convertedContent;
+                    
+                    showStatus(`✅ Bestand "${file.name}" geladen - klik "Bankmutaties Verwerken" om te importeren`, 'success');
+                } catch (error) {
+                    console.error('❌ Error reading bank file:', error);
+                    showStatus(`❌ Fout bij lezen bestand: ${error.message}`, 'error');
+                }
+            };
+            reader.onerror = function() {
+                showStatus('❌ Fout bij lezen bestand', 'error');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        // Handle declaraties file upload
+        function handleDeclaratiesFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            console.log('📁 Declaraties bestand geselecteerd:', file.name, 'Size:', file.size, 'Type:', file.type);
+            
+            const validExtensions = ['.csv', '.txt', '.xls', '.xlsx'];
+            const fileExtension = file.name.toLowerCase().substring(file.name.lastIndexOf('.'));
+            
+            if (!validExtensions.includes(fileExtension)) {
+                showStatus('⚠️ Alleen CSV, TXT en Excel bestanden worden ondersteund', 'warning');
+                return;
+            }
+            
+            showStatus('🔄 Bestand aan het inlezen...', 'info');
+            
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const content = e.target.result;
+                    
+                    // Zet inhoud in textarea (voor Excel bestanden wordt dit basic CSV parsing)
+                    document.getElementById('declaraties-data').value = content;
+                    
+                    showStatus(`✅ Bestand "${file.name}" geladen - klik "Declaraties Verwerken" om te importeren`, 'success');
+                } catch (error) {
+                    console.error('❌ Error reading declaraties file:', error);
+                    showStatus(`❌ Fout bij lezen bestand: ${error.message}`, 'error');
+                }
+            };
+            reader.onerror = function() {
+                showStatus('❌ Fout bij lezen bestand', 'error');
+            };
+            reader.readAsText(file, 'UTF-8');
+        }
+        
+        // Detect and convert bank formats (BUNQ, ING, ABN, Rabobank, SNS)
+        function detectAndConvertBankFormat(csvContent) {
+            const lines = csvContent.split('\n');
+            if (lines.length < 2) return csvContent;
+            
+            const firstLine = lines[0].toLowerCase().replace(/"/g, '');
+            const secondLine = lines[1];
+            
+            console.log('🔍 Detecting bank format. First line:', firstLine);
+            console.log('🔍 Second line sample:', secondLine.substring(0, 100) + '...');
+            
+            // BUNQ format detection (more flexible)
+            if ((firstLine.includes('date') || firstLine.includes('created')) && 
+                (firstLine.includes('amount') || firstLine.includes('value')) && 
+                (firstLine.includes('description') || firstLine.includes('memo'))) {
+                console.log('🏦 BUNQ formaat gedetecteerd - headers');
+                return convertBunqFormat(csvContent);
+            }
+            
+            // Check if it looks like BUNQ based on structure (semicolon separated with 4 columns)
+            if (lines.length > 1) {
+                const sampleLine = lines[1];
+                const semicolonCount = (sampleLine.match(/;/g) || []).length;
+                if (semicolonCount === 3 && sampleLine.includes('€')) {
+                    console.log('🏦 BUNQ formaat gedetecteerd - structuur (4 kolommen met €)');
+                    // Don't convert, just add proper header
+                    return 'Datum,Omschrijving,Details,Bedrag\n' + csvContent;
+                }
+            }
+            
+            // ING format detection  
+            if (firstLine.includes('datum') && firstLine.includes('bedrag') && firstLine.includes('omschrijving')) {
+                console.log('🏦 ING formaat gedetecteerd');
+                return convertIngFormat(csvContent);
+            }
+            
+            // ABN AMRO format detection
+            if (firstLine.includes('boekingsdatum') && firstLine.includes('transactiebedrag')) {
+                console.log('🏦 ABN AMRO formaat gedetecteerd');
+                return convertAbnAmroFormat(csvContent);
+            }
+            
+            // Rabobank format detection  
+            if (firstLine.includes('rentedatum') && firstLine.includes('bedrag')) {
+                console.log('🏦 Rabobank formaat gedetecteerd');
+                return convertRabobankFormat(csvContent);
+            }
+            
+            // Check if it looks like a standard CSV with expected columns
+            const hasDateColumn = firstLine.match(/(datum|date)/);
+            const hasAmountColumn = firstLine.match(/(bedrag|amount)/);
+            const hasDescColumn = firstLine.match(/(omschrijving|description)/);
+            
+            if (hasDateColumn && hasAmountColumn && hasDescColumn) {
+                console.log('📊 Standaard bank CSV formaat herkend');
+                return csvContent;
+            }
+            
+            // If no format detected but has comma/semicolon structure, assume it's raw data
+            if (firstLine.includes(',') || firstLine.includes(';')) {
+                console.log('📊 Onbekend CSV formaat - probeer als ruwe data');
+                // Add a simple header if none exists
+                if (!hasDateColumn && !hasAmountColumn) {
+                    return 'Datum,Bedrag,Omschrijving,Tegenrekening\n' + csvContent;
+                }
+            }
+            
+            console.log('📊 Standaard formaat aangenomen');
+            return csvContent;
+        }
+        
+        // Convert BUNQ CSV format
+        function convertBunqFormat(csvContent) {
+            const lines = csvContent.split('\n');
+            const headerLine = lines[0];
+            
+            // BUNQ kan zowel komma als puntkomma gebruiken
+            const delimiter = headerLine.includes(',') ? ',' : ';';
+            const headers = headerLine.split(delimiter).map(h => h.replace(/"/g, '').trim().toLowerCase());
+            
+            console.log('🏦 BUNQ headers gevonden:', headers);
+            console.log('🔍 BUNQ delimiter detected:', delimiter);
+            
+            // Find column indices for BUNQ format (flexibele matching)
+            const dateIndex = headers.findIndex(h => 
+                h.includes('date') || h.includes('datum') || h === 'created'
+            );
+            const amountIndex = headers.findIndex(h => 
+                h.includes('amount') || h.includes('bedrag') || h === 'value'
+            );
+            const descriptionIndex = headers.findIndex(h => 
+                h.includes('description') || h.includes('omschrijving') || h.includes('memo')
+            );
+            const counterpartyIndex = headers.findIndex(h => 
+                h.includes('counterparty') || h.includes('tegenrekening') || h.includes('name')
+            );
+            
+            console.log(`🔍 Column indices - Date: ${dateIndex}, Amount: ${amountIndex}, Description: ${descriptionIndex}, Counterparty: ${counterpartyIndex}`);
+            
+            if (dateIndex === -1 || amountIndex === -1 || descriptionIndex === -1) {
+                console.log('⚠️ BUNQ format niet volledig herkend, probeer standaard parsing');
+                return csvContent;
+            }
+            
+            const convertedLines = ['Datum,Bedrag,Omschrijving,Tegenrekening']; // Header
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                // Parse CSV with proper quote handling
+                const columns = parseCSVLine(line, delimiter);
+                
+                if (columns.length > Math.max(dateIndex, amountIndex, descriptionIndex)) {
+                    let date = columns[dateIndex] || '';
+                    let amount = columns[amountIndex] || '0';
+                    const description = columns[descriptionIndex] || '';
+                    const counterparty = counterpartyIndex !== -1 ? (columns[counterpartyIndex] || '') : '';
+                    
+                    // Clean and convert amount (BUNQ uses dots for decimals)
+                    amount = amount.replace(/[€\s]/g, '').replace(',', '.');
+                    
+                    // Convert BUNQ date format if needed
+                    if (date.includes('/')) {
+                        // Convert MM/DD/YYYY or DD/MM/YYYY to YYYY-MM-DD
+                        const dateParts = date.split('/');
+                        if (dateParts.length === 3) {
+                            // Assume DD/MM/YYYY for BUNQ (European format)
+                            date = `${dateParts[2]}-${dateParts[1].padStart(2, '0')}-${dateParts[0].padStart(2, '0')}`;
+                        }
+                    }
+                    
+                    console.log(`📝 Converting line ${i}: Date=${date}, Amount=${amount}, Desc=${description.substring(0,20)}...`);
+                    
+                    convertedLines.push(`"${date}","${amount}","${description}","${counterparty}"`);
+                }
+            }
+            
+            console.log(`✅ BUNQ formaat geconverteerd: ${convertedLines.length - 1} regels`);
+            return convertedLines.join('\n');
+        }
+        
+        // Helper function to parse CSV line with proper quote handling
+        function parseCSVLine(line, delimiter = ',') {
+            const result = [];
+            let current = '';
+            let inQuotes = false;
+            
+            for (let i = 0; i < line.length; i++) {
+                const char = line[i];
+                
+                if (char === '"') {
+                    inQuotes = !inQuotes;
+                } else if (char === delimiter && !inQuotes) {
+                    result.push(current.trim());
+                    current = '';
+                } else {
+                    current += char;
+                }
+            }
+            
+            // Add the last field
+            result.push(current.trim());
+            
+            return result.map(field => field.replace(/^"/, '').replace(/"$/, ''));
+        }
+        
+        // Convert ING CSV format
+        function convertIngFormat(csvContent) {
+            // ING uses comma-separated values with Dutch headers
+            const lines = csvContent.split('\n');
+            const convertedLines = ['Datum,Bedrag,Omschrijving,Tegenrekening'];
+            
+            for (let i = 1; i < lines.length; i++) {
+                const line = lines[i].trim();
+                if (!line) continue;
+                
+                const columns = line.split(',');
+                if (columns.length >= 3) {
+                    // Assume ING format: Datum, Bedrag, Omschrijving, Tegenrekening
+                    convertedLines.push(line);
+                }
+            }
+            
+            return convertedLines.join('\n');
+        }
+        
+        // Convert ABN AMRO format (placeholder)
+        function convertAbnAmroFormat(csvContent) {
+            console.log('🏦 ABN AMRO conversie - basis implementatie');
+            return csvContent; // For now, assume standard format
+        }
+        
+        // Convert Rabobank format (placeholder) 
+        function convertRabobankFormat(csvContent) {
+            console.log('🏦 Rabobank conversie - basis implementatie');
+            return csvContent; // For now, assume standard format
+        }
+        
+        // ==================== HELPER FUNCTIES ====================
+        
+        // Format date for display (Dutch format)
+        function formatDate(dateStr) {
+            try {
+                const date = new Date(dateStr);
+                return date.toLocaleDateString('nl-NL');
+            } catch (error) {
+                console.warn('Date formatting error:', error);
+                return dateStr;
+            }
+        }
+        
+        // Format currency for display
+        function formatCurrency(amount) {
+            try {
+                const num = parseFloat(amount);
+                return new Intl.NumberFormat('nl-NL', {
+                    style: 'currency',
+                    currency: 'EUR'
+                }).format(num);
+            } catch (error) {
+                console.warn('Currency formatting error:', error);
+                return `€ ${amount}`;
+            }
+        }
+        
+        // Validate if date string is valid
+        function isValidDate(dateString) {
+            if (!dateString) return false;
+            
+            const date = new Date(dateString);
+            return date instanceof Date && !isNaN(date) && 
+                   dateString.match(/^\d{4}-\d{2}-\d{2}$/) && 
+                   date.getFullYear() > 1900 && date.getFullYear() < 2100;
+        }
+        
+        // Intelligente naam matching tussen bankomschrijving en debiteurnaam
+        function checkNameMatch(bankOmschrijving, debiteurNaam) {
+            const bankText = bankOmschrijving.toLowerCase();
+            const debiteurText = debiteurNaam.toLowerCase();
+            
+            // Exact match
+            if (bankText.includes(debiteurText) || debiteurText.includes(bankText)) {
+                return { score: 1.0, details: 'exact_substring' };
+            }
+            
+            // Split namen in woorden
+            const bankWords = bankText.split(/[\s,.-]+/).filter(w => w.length > 2);
+            const debiteurWords = debiteurText.split(/[\s,.-]+/).filter(w => w.length > 2);
+            
+            if (debiteurWords.length === 0 || bankWords.length === 0) {
+                return { score: 0, details: 'no_words' };
+            }
+            
+            let matchingWords = 0;
+            let totalWords = debiteurWords.length;
+            const matchedWords = [];
+            
+            debiteurWords.forEach(debiteurWord => {
+                const found = bankWords.some(bankWord => {
+                    // Exact woordmatch
+                    if (bankWord === debiteurWord) {
+                        matchedWords.push({ debiteur: debiteurWord, bank: bankWord, type: 'exact' });
+                        return true;
+                    }
+                    // Gedeeltelijke match (minimaal 4 karakters)
+                    if (debiteurWord.length >= 4 && bankWord.includes(debiteurWord)) {
+                        matchedWords.push({ debiteur: debiteurWord, bank: bankWord, type: 'partial' });
+                        return true;
+                    }
+                    // Andersom - debiteurWord bevat bankWord
+                    if (bankWord.length >= 4 && debiteurWord.includes(bankWord)) {
+                        matchedWords.push({ debiteur: debiteurWord, bank: bankWord, type: 'partial_reverse' });
+                        return true;
+                    }
+                    return false;
+                });
+                
+                if (found) matchingWords++;
+            });
+            
+            const score = matchingWords / totalWords;
+            
+            return {
+                score: score,
+                details: `${matchingWords}/${totalWords} woorden`,
+                matchedWords: matchedWords
+            };
+        }
+        
+        // Export nieuwe functies
+        window.handleBankFileUpload = handleBankFileUpload;
+        window.handleDeclaratiesFileUpload = handleDeclaratiesFileUpload;
+        window.saveDataToStorage = saveDataToStorage;
+        window.loadDataFromStorage = loadDataFromStorage;
+        window.clearStoredData = clearStoredData;
+        window.confirmAndClearData = confirmAndClearData;
+        window.formatDate = formatDate;
+        window.formatCurrency = formatCurrency;
+        window.isValidDate = isValidDate;
+
         if (document.readyState === 'loading') {
             document.addEventListener('DOMContentLoaded', initApp);
         } else {
