@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Test Categorization</title>
+    <script>
+        // Open the cashflow app and test categorization
+        function testButton() {
+            const newWindow = window.open('cashflow-simple.html', '_blank');
+            
+            // Wait for the page to load and then test
+            newWindow.addEventListener('load', () => {
+                setTimeout(() => {
+                    console.log('Testing categorization...');
+                    if (newWindow.testCategorization) {
+                        newWindow.testCategorization();
+                        console.log('✅ Test function called!');
+                    } else {
+                        console.log('❌ Test function not available');
+                    }
+                }, 2000);
+            });
+        }
+    </script>
+</head>
+<body>
+    <h1>Test Categorization Button</h1>
+    <button onclick="testButton()">Open and Test Categorization</button>
+    <p>This will open the cashflow app and automatically test the categorization modal.</p>
+</body>
+</html>

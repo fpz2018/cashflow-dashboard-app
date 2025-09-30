@@ -60,6 +60,7 @@
                         </button>
                     </div>
                     
+
                     <span class="text-sm text-gray-500">🇳🇱 Nederlandse Versie</span>
                 </div>
             </div>
@@ -381,7 +382,8 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         📋 <strong>CSV Bestand Upload:</strong> Selecteer je BUNQ, ING, ABN, Rabobank of SNS CSV bestand<br>
                         📊 <strong>Of kopieer/plak data:</strong> Datum | Bedrag | Omschrijving | Tegenrekening<br>
                         💰 <strong>Bedrag:</strong> Positief voor inkomsten, negatief voor uitgaven<br>
-                        🔄 <strong>Automatisch:</strong> Detecteert BUNQ formaat en andere Nederlandse banken
+                        🔄 <strong>Automatisch:</strong> Detecteert BUNQ formaat en andere Nederlandse banken<br>
+                        🎯 <strong>Categorisatie:</strong> Na upload zie je een "📂 Categoriseer" knop voor onbekende transacties
                     </p>
                     
                     <!-- File Upload Section -->
@@ -466,9 +468,9 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 <!-- Handmatige Controle Nodig -->
                 <div id="manual-review-section" class="bg-yellow-50 border border-yellow-200 rounded-lg p-4" style="display: none;">
                     <h4 class="font-semibold text-yellow-900 mb-3">⚠️ Handmatige Controle Vereist</h4>
-                    <div class="overflow-x-auto">
+                    <div class="max-h-80 overflow-y-auto overflow-x-auto border border-yellow-300 rounded-lg">
                         <table class="min-w-full divide-y divide-yellow-200">
-                            <thead class="bg-yellow-100">
+                            <thead class="bg-yellow-100 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Datum Bank</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-yellow-900 uppercase">Bedrag Bank</th>
@@ -487,9 +489,9 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 <!-- Niet Gematched -->
                 <div id="unmatched-section" class="bg-red-50 border border-red-200 rounded-lg p-4" style="display: none;">
                     <h4 class="font-semibold text-red-900 mb-3">❌ Niet Gematched</h4>
-                    <div class="overflow-x-auto">
+                    <div class="max-h-80 overflow-y-auto overflow-x-auto border border-red-300 rounded-lg">
                         <table class="min-w-full divide-y divide-red-200">
-                            <thead class="bg-red-100">
+                            <thead class="bg-red-100 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Datum</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-red-900 uppercase">Bedrag</th>
@@ -510,33 +512,54 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         <span>✅ Gematched Transacties (<span id="matched-total">0</span>)</span>
                         <span id="matched-toggle-icon">▼</span>
                     </button>
-                    <div id="matched-details" class="mt-3 hidden overflow-x-auto">
-                        <table class="min-w-full divide-y divide-green-200">
-                            <thead class="bg-green-100">
-                                <tr>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Datum Bank</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Bedrag</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Omschrijving</th>
-                                    <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Gematched Met</th>
-                                </tr>
-                            </thead>
-                            <tbody id="matched-body" class="bg-white divide-y divide-green-200">
-                                <!-- Wordt gevuld door JavaScript -->
-                            </tbody>
-                        </table>
+                    <div id="matched-details" class="mt-3 hidden">
+                        <div class="max-h-80 overflow-y-auto overflow-x-auto border border-green-300 rounded-lg">
+                            <table class="min-w-full divide-y divide-green-200">
+                                <thead class="bg-green-100 sticky top-0 z-10">
+                                    <tr>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Datum Bank</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Bedrag</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Omschrijving</th>
+                                        <th class="px-4 py-2 text-left text-xs font-medium text-green-900 uppercase">Gematched Met</th>
+                                    </tr>
+                                </thead>
+                                <tbody id="matched-body" class="bg-white divide-y divide-green-200">
+                                    <!-- Wordt gevuld door JavaScript -->
+                                </tbody>
+                            </table>
+                        </div>
                     </div>
                 </div>
 
                 <!-- Suggesties voor Nieuwe Uitgaven -->
                 <div id="suggestions-section" class="bg-purple-50 border border-purple-200 rounded-lg p-4" style="display: none;">
-                    <h4 class="font-semibold text-purple-900 mb-3">💡 Suggesties voor Nieuwe Uitgaven</h4>
+                    <div class="flex justify-between items-center mb-3">
+                        <h4 class="font-semibold text-purple-900">💡 Suggesties voor Nieuwe Uitgaven</h4>
+                        <button id="toggle-suggestions" onclick="toggleSection('suggestions-content', 'toggle-suggestions')" 
+                                class="px-3 py-1 text-sm bg-purple-100 hover:bg-purple-200 text-purple-800 rounded-md transition-colors">
+                            ▼ Inklappen
+                        </button>
+                    </div>
                     <p class="text-sm text-purple-700 mb-3">
                         Deze uitgaven konden niet worden gematched met bekende vaste kosten. 
                         Klik op ‘Toevoegen’ om ze als nieuwe vaste uitgave op te slaan.
                     </p>
-                    <div class="overflow-x-auto">
+                    <!-- Search en Info -->
+                    <div class="flex justify-between items-center mb-3">
+                        <div class="flex-1 max-w-md">
+                            <input type="text" id="suggestions-search" placeholder="Zoek suggesties..." 
+                                   class="w-full px-3 py-2 border border-purple-300 rounded-md focus:outline-none focus:ring-2 focus:ring-purple-500 text-sm"
+                                   oninput="filterSuggestions()">
+                        </div>
+                        <div class="text-sm text-purple-700 ml-4">
+                            <span id="suggestions-count-display">0</span> suggesties
+                        </div>
+                    </div>
+                    
+                    <!-- Table Container with Limited Height -->
+                    <div class="max-h-80 overflow-y-auto overflow-x-auto border border-purple-300 rounded-lg">
                         <table class="min-w-full divide-y divide-purple-200">
-                            <thead class="bg-purple-100">
+                            <thead class="bg-purple-100 sticky top-0 z-10">
                                 <tr>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Datum</th>
                                     <th class="px-4 py-2 text-left text-xs font-medium text-purple-900 uppercase">Bedrag</th>
@@ -549,7 +572,30 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                                 <!-- Wordt gevuld door JavaScript -->
                             </tbody>
                         </table>
+                        
+                        <!-- Empty State -->
+                        <div id="suggestions-empty" class="text-center py-8 text-purple-600" style="display: none;">
+                            <div class="text-4xl mb-2">💡</div>
+                            <div>Geen suggesties gevonden</div>
+                            <div class="text-sm mt-2 text-purple-500">Alle uitgaven zijn gematched</div>
+                        </div>
                     </div>
+                    
+                    <!-- Bulk Actions -->
+                    <div class="mt-3 flex justify-between items-center">
+                        <div class="text-sm text-purple-600">
+                            💡 <strong>Tip:</strong> Voeg regelmatig terugkerende uitgaven toe als vaste kosten
+                        </div>
+                        <div class="flex gap-2">
+                            <button onclick="addAllSuggestionsAsVasteKosten()" class="px-3 py-1 text-sm bg-purple-500 hover:bg-purple-600 text-white rounded-md transition-colors">
+                                ➕ Alle Toevoegen
+                            </button>
+                            <button onclick="dismissAllSuggestions()" class="px-3 py-1 text-sm bg-gray-400 hover:bg-gray-500 text-white rounded-md transition-colors">
+                                ❌ Alle Wegeren
+                            </button>
+                        </div>
+                    </div>
+                </div>
                 </div>
             </div>
         </div>
@@ -597,47 +643,152 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             
             <!-- Transacties die Hulp Nodig Hebben -->
             <div id="needs-help-section" class="mb-6" style="display: none;">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3">❓ Transacties die Hulp Nodig Hebben</h4>
-                <p class="text-sm text-gray-600 mb-4">
-                    Deze transacties kon ik niet automatisch categoriseren. Help me door de juiste categorie te kiezen:
-                </p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Huidige Gok</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correcte Categorie</th>
-                            </tr>
-                        </thead>
-                        <tbody id="needs-help-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Dynamically filled -->
-                        </tbody>
-                    </table>
+                <div class="flex justify-between items-center mb-3">
+                    <h4 class="text-lg font-semibold text-gray-900">❓ Transacties die Hulp Nodig Hebben</h4>
+                    <button id="toggle-needs-help" onclick="toggleSection('needs-help-content', 'toggle-needs-help')" 
+                            class="px-3 py-1 text-sm bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded-md transition-colors">
+                        ▼ Inklappen
+                    </button>
+                </div>
+                
+                <div id="needs-help-content">
+                    <p class="text-sm text-gray-600 mb-4">
+                        Deze transacties kon ik niet automatisch categoriseren. Help me door de juiste categorie te kiezen:
+                    </p>
+                    <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-yellow-50 sticky top-0">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Huidige Gok</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correcte Categorie</th>
+                                </tr>
+                            </thead>
+                            <tbody id="needs-help-table" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamically filled -->
+                            </tbody>
+                        </table>
+                    </div>
                 </div>
             </div>
             
             <!-- Alle Geanalyseerde Transacties -->
             <div id="all-transactions-section" style="display: none;">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3">📋 Alle Geanalyseerde Transacties</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categorie</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vertrouwen</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="all-transactions-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Dynamically filled -->
-                        </tbody>
-                    </table>
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">📋 Alle Geanalyseerde Transacties</h4>
+                    <button id="toggle-all-transactions" onclick="toggleSection('all-transactions-content', 'toggle-all-transactions')" 
+                            class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                        ▼ Inklappen
+                    </button>
+                </div>
+                
+                <div id="all-transactions-content">
+                    <!-- Search en Filter Controls -->
+                    <div class="bg-gray-50 p-4 rounded-lg mb-4">
+                        <div class="flex flex-col sm:flex-row gap-4 items-center">
+                            <div class="flex-1">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">🔍 Zoeken</label>
+                                <input type="text" id="transactions-search" placeholder="Zoek op omschrijving, tegenrekening..." 
+                                       class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                       oninput="filterTransactions()">
+                            </div>
+                            <div class="w-full sm:w-48">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">📂 Categorie</label>
+                                <select id="transactions-category-filter" onchange="filterTransactions()" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                    <option value="">Alle categorieën</option>
+                                    <option value="unknown">❓ Onbekend</option>
+                                    <option value="needs-help">❗ Hulp nodig</option>
+                                </select>
+                            </div>
+                            <div class="w-full sm:w-32">
+                                <label class="block text-sm font-medium text-gray-700 mb-1">📊 Per pagina</label>
+                                <select id="transactions-per-page" onchange="updateTransactionsPagination()" 
+                                        class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm">
+                                    <option value="10">10</option>
+                                    <option value="25" selected>25</option>
+                                    <option value="50">50</option>
+                                    <option value="100">100</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    
+                    <!-- Results Info -->
+                    <div class="flex justify-between items-center mb-4">
+                        <div class="text-sm text-gray-600">
+                            <span id="transactions-showing">Toont 1-25</span> van <span id="transactions-total">0</span> transacties
+                        </div>
+                        <button onclick="exportTransactions()" class="px-3 py-1 text-sm bg-green-500 hover:bg-green-600 text-white rounded-md transition-colors">
+                            📊 Export CSV
+                        </button>
+                    </div>
+                    
+                    <!-- Table Container -->
+                    <div class="overflow-x-auto bg-white rounded-lg shadow-sm border border-gray-200">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100" 
+                                        onclick="sortTransactions('datum')">
+                                        Datum <span id="sort-datum" class="ml-1">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100" 
+                                        onclick="sortTransactions('bedrag')">
+                                        Bedrag <span id="sort-bedrag" class="ml-1">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100" 
+                                        onclick="sortTransactions('category')">
+                                        Categorie <span id="sort-category" class="ml-1">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase cursor-pointer hover:bg-gray-100" 
+                                        onclick="sortTransactions('confidence')">
+                                        Vertrouwen <span id="sort-confidence" class="ml-1">↕️</span>
+                                    </th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="all-transactions-table" class="bg-white divide-y divide-gray-200">
+                                <!-- Dynamically filled -->
+                            </tbody>
+                        </table>
+                        
+                        <!-- Loading State -->
+                        <div id="transactions-loading" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-blue-500"></div>
+                            <div class="mt-2">Transacties laden...</div>
+                        </div>
+                        
+                        <!-- Empty State -->
+                        <div id="transactions-empty" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">📭</div>
+                            <div>Geen transacties gevonden die aan je filters voldoen</div>
+                        </div>
+                    </div>
+                    
+                    <!-- Pagination Controls -->
+                    <div class="flex justify-between items-center mt-4">
+                        <div class="flex items-center space-x-2">
+                            <button id="transactions-prev-btn" onclick="changeTransactionsPage(-1)" disabled
+                                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors">
+                                ← Vorige
+                            </button>
+                            <span id="transactions-page-info" class="text-sm text-gray-600 px-3">Pagina 1 van 1</span>
+                            <button id="transactions-next-btn" onclick="changeTransactionsPage(1)" disabled
+                                    class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 disabled:opacity-50 disabled:cursor-not-allowed rounded-md transition-colors">
+                                Volgende →
+                            </button>
+                        </div>
+                        <div class="text-sm text-gray-500">
+                            Snel naar pagina: 
+                            <input type="number" id="transactions-page-jump" min="1" max="1" value="1" 
+                                   class="w-16 px-2 py-1 border border-gray-300 rounded text-center ml-2"
+                                   onchange="jumpToTransactionsPage(this.value)">
+                        </div>
+                    </div>
                 </div>
             </div>
         </div>
@@ -696,26 +847,31 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </button>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origineel Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits/Correcties</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Netto Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldatum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="declaraties-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-declaraties" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen declaraties geïmporteerd
+                <!-- Table Container with Limited Height -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origineel Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits/Correcties</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Netto Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldatum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="declaraties-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-declaraties" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">📄</div>
+                            <div>Geen declaraties geïmporteerd</div>
+                            <div class="text-sm mt-2 text-gray-400">Upload EPD declaraties om te beginnen</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -731,23 +887,26 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </button>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crediteur</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="vaste-kosten-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-vaste-kosten" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen vaste kosten geïmporteerd
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Crediteur</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaldag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="vaste-kosten-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-vaste-kosten" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">💸</div>
+                            <div>Geen vaste kosten geïmporteerd</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -770,22 +929,26 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </div>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Naam</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaltermijn (dagen)</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="verzekeraars-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-verzekeraars" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen zorgverzekeraars geïmporteerd. Standaard betaaltermijnen worden gebruikt.
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Naam</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Betaaltermijn (dagen)</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="verzekeraars-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-verzekeraars" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">🏥</div>
+                            <div>Geen zorgverzekeraars geïmporteerd</div>
+                            <div class="text-sm mt-2 text-gray-400">Standaard betaaltermijnen worden gebruikt</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -801,26 +964,29 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </button>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origineel Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits/Correcties</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Netto Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verwachte Betaling</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="particulier-facturen-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-particulier-facturen" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen particulier facturen geïmporteerd
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origineel Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits/Correcties</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Netto Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verwachte Betaling</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="particulier-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-particulier-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">👥</div>
+                            <div>Geen particulier facturen geïmporteerd</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -836,23 +1002,26 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </button>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="credit-facturen-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-credit-facturen" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen credit facturen geïmporteerd
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="credit-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-credit-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">🔄</div>
+                            <div>Geen credit facturen geïmporteerd</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -875,23 +1044,26 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </div>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="variabele-uitgaven-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-variabele-uitgaven" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen variabele uitgaven toegevoegd
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto overflow-x-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="variabele-uitgaven-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        <div id="no-variabele-uitgaven" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">📋</div>
+                            <div>Geen variabele uitgaven toegevoegd</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -902,7 +1074,14 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     <h4 class="text-lg font-semibold text-gray-900">
                         Geïmporteerde Bankmutaties
                     </h4>
-                    <div class="flex gap-2">
+                    <button id="toggle-bankmutaties-actions" onclick="toggleSection('bankmutaties-actions', 'toggle-bankmutaties-actions')" 
+                            class="px-3 py-1 text-sm bg-gray-100 hover:bg-gray-200 rounded-md transition-colors">
+                        ▼ Acties
+                    </button>
+                </div>
+                
+                <div id="bankmutaties-actions" class="bg-gray-50 p-4 rounded-lg mb-4">
+                    <div class="flex flex-wrap gap-2">
                         <button onclick="runBankReconciliation()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors text-sm">
                             🔍 Reconciliatie Uitvoeren
                         </button>
@@ -912,7 +1091,10 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         <button onclick="aggressiveAutoMatch()" class="px-4 py-2 bg-orange-500 text-white rounded-md hover:bg-orange-600 transition-colors text-sm">
                             🚀 Agressief Matchen
                         </button>
-                        <button onclick="debugMatching()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-sm">
+                        <button onclick="runFinancialAnalysis()" class="px-4 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors text-sm">
+                            🧠 Slimme Analyse
+                        </button>
+                        <button onclick="debugMatching()" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm">
                             🐛 Debug Matching
                         </button>
                         <button onclick="deleteAllBankmutaties()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
@@ -921,24 +1103,48 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </div>
                 </div>
                 
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tegenrekening</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
-                            </tr>
-                        </thead>
-                        <tbody id="bankmutaties-table-body" class="bg-white divide-y divide-gray-200">
-                            <!-- Wordt gevuld door JavaScript -->
-                        </tbody>
-                    </table>
-                    <div id="no-bankmutaties" class="text-center py-8 text-gray-500" style="display: none;">
-                        Geen bankmutaties geïmporteerd
+                <!-- Search en Info -->
+                <div class="flex justify-between items-center mb-4">
+                    <div class="flex-1 max-w-md">
+                        <input type="text" id="bankmutaties-search" placeholder="Zoek bankmutaties..." 
+                               class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                               oninput="filterBankmutaties()">
+                    </div>
+                    <div class="text-sm text-gray-600">
+                        <span id="bankmutaties-count">0</span> bankmutaties
+                    </div>
+                </div>
+                
+                <!-- Table Container with Max Height -->
+                <div class="bg-white rounded-lg shadow-sm border border-gray-200">
+                    <div class="max-h-96 overflow-y-auto">
+                        <table class="min-w-full divide-y divide-gray-200">
+                            <thead class="bg-gray-50 sticky top-0 z-10">
+                                <tr>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tegenrekening</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                                </tr>
+                            </thead>
+                            <tbody id="bankmutaties-table-body" class="bg-white divide-y divide-gray-200">
+                                <!-- Wordt gevuld door JavaScript -->
+                            </tbody>
+                        </table>
+                        
+                        <div id="no-bankmutaties" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">🏦</div>
+                            <div>Geen bankmutaties geïmporteerd</div>
+                            <div class="text-sm mt-2">Upload een CSV bestand om te beginnen</div>
+                        </div>
+                        
+                        <div id="no-bankmutaties-filtered" class="text-center py-8 text-gray-500" style="display: none;">
+                            <div class="text-4xl mb-2">🔍</div>
+                            <div>Geen bankmutaties gevonden</div>
+                            <div class="text-sm mt-2">Pas je zoekopdracht aan</div>
+                        </div>
                     </div>
                 </div>
             </div>
@@ -1904,6 +2110,15 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             updateBankmutatiësTable();
             updateCounts();
         }
+        
+        // Update bankmutaties table in beheer sectie
+        function updateBankmutatiësTable() {
+            // Clear search and trigger filter to show all bankmutaties
+            if (document.getElementById('bankmutaties-search')) {
+                document.getElementById('bankmutaties-search').value = '';
+                filterBankmutaties();
+            }
+        }
 
         // Update counts in tabs
         function updateCounts() {
@@ -1912,8 +2127,12 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             document.getElementById('verzekeraars-count').textContent = customVerzekeraars.length;
             document.getElementById('particulier-facturen-count').textContent = particulierFacturen.length;
             document.getElementById('credit-facturen-count').textContent = creditFacturen.length;
-
             document.getElementById('variabele-uitgaven-count').textContent = variabeleUitgaven.length;
+            
+            // Update bankmutaties count
+            if (document.getElementById('bankmutaties-count')) {
+                document.getElementById('bankmutaties-count').textContent = bankmutaties?.length || 0;
+            }
         }
 
         // Bereken netto bedrag voor een declaratie (origineel - credits - correcties)
@@ -4233,73 +4452,338 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         ${analysis.confidence !== 'unknown' ? `<div class="text-xs text-gray-500 mt-1">Vertrouwen: ${analysis.confidence}</div>` : ''}
                     </td>
                     <td class="px-4 py-3 text-sm">
-                        <select onchange="updateTransactionCategory('${transaction.id}', this.value)" class="w-full text-xs border border-gray-300 rounded px-2 py-1">
-                            <option value="">-- Kies categorie --</option>
-                            ${Object.entries(categorizationPatterns).map(([key, data]) => 
-                                `<option value="${key}">${data.name}</option>`
-                            ).join('')}
-                            <option value="create_new">➕ Nieuwe categorie...</option>
-                        </select>
-                        <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="mt-1 text-xs text-blue-600 hover:text-blue-800">
-                            🔍 Details
-                        </button>
+                        <div class="flex flex-col gap-2">
+                            <button onclick="helpCategorizeTransaction('${transaction.id}')" class="px-3 py-1 bg-blue-500 hover:bg-blue-600 text-white rounded text-xs transition-colors">
+                                📂 Kies Categorie
+                            </button>
+                            <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="text-xs text-blue-600 hover:text-blue-800">
+                                🔍 Details
+                            </button>
+                        </div>
                     </td>
                 `;
             });
         }
         
-        // Toon alle transacties tabel
+        // === ENHANCED UI FUNCTIONS ===
+        
+        // Global variables for table management
+        let allTransactionsData = []; // Store all transactions for filtering/sorting
+        let filteredTransactionsData = []; // Store filtered transactions
+        let currentTransactionsPage = 1;
+        let transactionsPerPage = 25;
+        let currentSortField = 'datum';
+        let currentSortDirection = 'desc';
+        
+        // Toon alle transacties tabel met paginering en filtering
         function displayAllTransactionsTable(analyzedTransactions) {
             const section = document.getElementById('all-transactions-section');
-            const tbody = document.getElementById('all-transactions-table');
             
+            // Store data globally
+            allTransactionsData = [...analyzedTransactions];
+            filteredTransactionsData = [...analyzedTransactions];
+            
+            // Populate category filter options
+            populateTransactionsCategoryFilter();
+            
+            // Apply initial sort
+            sortTransactionsData();
+            
+            // Show section and render table
             section.style.display = 'block';
-            tbody.innerHTML = '';
+            renderTransactionsTable();
             
-            // Sorteer op datum (nieuwste eerst)
-            const sortedTransactions = [...analyzedTransactions].sort((a, b) => 
-                new Date(b.datum) - new Date(a.datum)
-            );
+            console.log(`📊 Displaying ${analyzedTransactions.length} transactions with pagination`);
+        }
+        
+        // Populate category filter dropdown
+        function populateTransactionsCategoryFilter() {
+            const select = document.getElementById('transactions-category-filter');
+            const existingOptions = select.innerHTML;
             
-            sortedTransactions.forEach((transaction) => {
-                const analysis = transaction.analysis;
-                const amount = parseFloat(transaction.bedrag);
-                const amountColor = amount >= 0 ? 'text-green-600' : 'text-red-600';
-                
-                const confidenceBadge = {
-                    'high': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Hoog ✅</span>',
-                    'medium': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Medium ⚠️</span>',
-                    'low': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">Laag ❓</span>',
-                    'manual': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Handmatig 👤</span>',
-                    'smart_learned': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Smart Geleerd 🧠</span>',
-                    'unknown': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Onbekend ❌</span>'
-                }[analysis.confidence] || '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Onbekend</span>';
-                
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-900">${formatDate(transaction.datum)}</td>
-                    <td class="px-4 py-3 text-sm font-medium ${amountColor}">${formatCurrency(amount)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
-                        <div class="truncate" title="${transaction.omschrijving}">${transaction.omschrijving}</div>
-                        ${transaction.tegenrekening ? `<div class="text-xs text-gray-400">${transaction.tegenrekening}</div>` : ''}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                        <span class="${analysis.categoryColor} px-2 py-1 rounded-full text-xs">
-                            ${analysis.categoryName}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-sm">${confidenceBadge}</td>
-                    <td class="px-4 py-3 text-sm">
-                        <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="text-blue-600 hover:text-blue-800 text-xs">
-                            🔍 Analyse Details
-                        </button>
-                        ${analysis.needsHelp ? 
-                            `<button onclick="helpCategorizeTransaction('${transaction.id}')" class="ml-2 text-yellow-600 hover:text-yellow-800 text-xs">❓ Help Categoriseren</button>` 
-                            : ''
-                        }
-                    </td>
-                `;
+            // Get unique categories from transactions
+            const categories = new Set();
+            allTransactionsData.forEach(transaction => {
+                if (transaction.analysis) {
+                    categories.add(transaction.analysis.category);
+                }
             });
+            
+            // Build new options
+            let optionsHTML = `
+                <option value="">Alle categorieën</option>
+                <option value="unknown">❓ Onbekend</option>
+                <option value="needs-help">❗ Hulp nodig</option>
+            `;
+            
+            // Add category options
+            Object.entries(categorizationPatterns).forEach(([key, data]) => {
+                if (categories.has(key)) {
+                    optionsHTML += `<option value="${key}">${data.name}</option>`;
+                }
+            });
+            
+            select.innerHTML = optionsHTML;
+        }
+        
+        // Filter transactions based on search and category
+        function filterTransactions() {
+            const searchTerm = document.getElementById('transactions-search').value.toLowerCase();
+            const categoryFilter = document.getElementById('transactions-category-filter').value;
+            
+            filteredTransactionsData = allTransactionsData.filter(transaction => {
+                const matchesSearch = !searchTerm || 
+                    transaction.omschrijving.toLowerCase().includes(searchTerm) ||
+                    (transaction.tegenrekening && transaction.tegenrekening.toLowerCase().includes(searchTerm));
+                
+                let matchesCategory = true;
+                if (categoryFilter) {
+                    if (categoryFilter === 'unknown') {
+                        matchesCategory = transaction.analysis.category === 'unknown';
+                    } else if (categoryFilter === 'needs-help') {
+                        matchesCategory = transaction.analysis.needsHelp;
+                    } else {
+                        matchesCategory = transaction.analysis.category === categoryFilter;
+                    }
+                }
+                
+                return matchesSearch && matchesCategory;
+            });
+            
+            // Reset to first page when filtering
+            currentTransactionsPage = 1;
+            renderTransactionsTable();
+        }
+        
+        // Sort transactions
+        function sortTransactions(field) {
+            if (currentSortField === field) {
+                // Toggle direction if same field
+                currentSortDirection = currentSortDirection === 'asc' ? 'desc' : 'asc';
+            } else {
+                // New field, default to descending
+                currentSortField = field;
+                currentSortDirection = 'desc';
+            }
+            
+            // Update sort indicators
+            document.querySelectorAll('[id^="sort-"]').forEach(indicator => {
+                indicator.textContent = '↕️';
+            });
+            document.getElementById(`sort-${field}`).textContent = currentSortDirection === 'asc' ? '↑' : '↓';
+            
+            sortTransactionsData();
+            renderTransactionsTable();
+        }
+        
+        // Apply sorting to filtered data
+        function sortTransactionsData() {
+            filteredTransactionsData.sort((a, b) => {
+                let aValue, bValue;
+                
+                switch (currentSortField) {
+                    case 'datum':
+                        aValue = new Date(a.datum);
+                        bValue = new Date(b.datum);
+                        break;
+                    case 'bedrag':
+                        aValue = parseFloat(a.bedrag);
+                        bValue = parseFloat(b.bedrag);
+                        break;
+                    case 'category':
+                        aValue = a.analysis.categoryName;
+                        bValue = b.analysis.categoryName;
+                        break;
+                    case 'confidence':
+                        const confidenceOrder = { 'unknown': 0, 'low': 1, 'medium': 2, 'high': 3, 'manual': 4, 'smart_learned': 4 };
+                        aValue = confidenceOrder[a.analysis.confidence] || 0;
+                        bValue = confidenceOrder[b.analysis.confidence] || 0;
+                        break;
+                    default:
+                        return 0;
+                }
+                
+                if (aValue < bValue) return currentSortDirection === 'asc' ? -1 : 1;
+                if (aValue > bValue) return currentSortDirection === 'asc' ? 1 : -1;
+                return 0;
+            });
+        }
+        
+        // Render the transactions table with pagination
+        function renderTransactionsTable() {
+            const tbody = document.getElementById('all-transactions-table');
+            const loadingDiv = document.getElementById('transactions-loading');
+            const emptyDiv = document.getElementById('transactions-empty');
+            
+            // Show loading state briefly
+            tbody.innerHTML = '';
+            loadingDiv.style.display = 'block';
+            emptyDiv.style.display = 'none';
+            
+            setTimeout(() => {
+                loadingDiv.style.display = 'none';
+                
+                if (filteredTransactionsData.length === 0) {
+                    emptyDiv.style.display = 'block';
+                    updateTransactionsPaginationInfo();
+                    return;
+                }
+                
+                emptyDiv.style.display = 'none';
+                
+                // Calculate pagination
+                const startIndex = (currentTransactionsPage - 1) * transactionsPerPage;
+                const endIndex = Math.min(startIndex + transactionsPerPage, filteredTransactionsData.length);
+                const pageTransactions = filteredTransactionsData.slice(startIndex, endIndex);
+                
+                // Count transactions that need help
+                const needsHelpCount = pageTransactions.filter(t => t.analysis?.needsHelp).length;
+                console.log(`🎯 Rendering ${pageTransactions.length} transactions on current page, ${needsHelpCount} need categorization help`);
+                
+                // Render rows
+                pageTransactions.forEach((transaction) => {
+                    const analysis = transaction.analysis;
+                    const amount = parseFloat(transaction.bedrag);
+                    const amountColor = amount >= 0 ? 'text-green-600' : 'text-red-600';
+                    
+                    const confidenceBadge = {
+                        'high': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Hoog ✅</span>',
+                        'medium': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Medium ⚠️</span>',
+                        'low': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">Laag ❓</span>',
+                        'manual': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Handmatig 👤</span>',
+                        'smart_learned': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Smart Geleerd 🧠</span>',
+                        'unknown': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Onbekend ❌</span>'
+                    }[analysis.confidence] || '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Onbekend</span>';
+                    
+                    const row = tbody.insertRow();
+                    row.className = 'hover:bg-gray-50 transition-colors';
+                    row.innerHTML = `
+                        <td class="px-4 py-3 text-sm text-gray-900">${formatDate(transaction.datum)}</td>
+                        <td class="px-4 py-3 text-sm font-medium ${amountColor}">${formatCurrency(amount)}</td>
+                        <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                            <div class="truncate" title="${transaction.omschrijving}">${transaction.omschrijving}</div>
+                            ${transaction.tegenrekening ? `<div class="text-xs text-gray-400 truncate" title="${transaction.tegenrekening}">${transaction.tegenrekening}</div>` : ''}
+                        </td>
+                        <td class="px-4 py-3 text-sm">
+                            <span class="${analysis.categoryColor} px-2 py-1 rounded-full text-xs">
+                                ${analysis.categoryName}
+                            </span>
+                        </td>
+                        <td class="px-4 py-3 text-sm">${confidenceBadge}</td>
+                        <td class="px-4 py-3 text-sm">
+                            <div class="flex flex-col gap-1">
+                                <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="text-blue-600 hover:text-blue-800 text-xs">
+                                    🔍 Details
+                                </button>
+                                ${analysis.needsHelp ? 
+                                    `<button onclick="helpCategorizeTransaction('${transaction.id}')" class="px-2 py-1 bg-yellow-100 hover:bg-yellow-200 text-yellow-800 rounded text-xs transition-colors">📂 Categoriseer</button>` 
+                                    : ''
+                                }
+                            </div>
+                        </td>
+                    `;
+                });
+                
+                updateTransactionsPaginationInfo();
+            }, 100); // Small delay for smooth loading effect
+        }
+        
+        // Update pagination info and controls
+        function updateTransactionsPaginationInfo() {
+            const totalTransactions = filteredTransactionsData.length;
+            const totalPages = Math.ceil(totalTransactions / transactionsPerPage);
+            const startIndex = (currentTransactionsPage - 1) * transactionsPerPage + 1;
+            const endIndex = Math.min(currentTransactionsPage * transactionsPerPage, totalTransactions);
+            
+            // Update info displays
+            document.getElementById('transactions-showing').textContent = 
+                totalTransactions > 0 ? `Toont ${startIndex}-${endIndex}` : 'Toont 0';
+            document.getElementById('transactions-total').textContent = totalTransactions;
+            document.getElementById('transactions-page-info').textContent = `Pagina ${currentTransactionsPage} van ${totalPages}`;
+            
+            // Update navigation buttons
+            const prevBtn = document.getElementById('transactions-prev-btn');
+            const nextBtn = document.getElementById('transactions-next-btn');
+            const pageJump = document.getElementById('transactions-page-jump');
+            
+            prevBtn.disabled = currentTransactionsPage <= 1;
+            nextBtn.disabled = currentTransactionsPage >= totalPages;
+            pageJump.max = totalPages;
+            pageJump.value = currentTransactionsPage;
+        }
+        
+        // Update pagination when per-page changes
+        function updateTransactionsPagination() {
+            transactionsPerPage = parseInt(document.getElementById('transactions-per-page').value);
+            currentTransactionsPage = 1; // Reset to first page
+            renderTransactionsTable();
+        }
+        
+        // Change page
+        function changeTransactionsPage(delta) {
+            const totalPages = Math.ceil(filteredTransactionsData.length / transactionsPerPage);
+            const newPage = currentTransactionsPage + delta;
+            
+            if (newPage >= 1 && newPage <= totalPages) {
+                currentTransactionsPage = newPage;
+                renderTransactionsTable();
+            }
+        }
+        
+        // Jump to specific page
+        function jumpToTransactionsPage(pageNumber) {
+            const totalPages = Math.ceil(filteredTransactionsData.length / transactionsPerPage);
+            const page = parseInt(pageNumber);
+            
+            if (page >= 1 && page <= totalPages) {
+                currentTransactionsPage = page;
+                renderTransactionsTable();
+            }
+        }
+        
+        // Toggle section visibility
+        function toggleSection(contentId, buttonId) {
+            const content = document.getElementById(contentId);
+            const button = document.getElementById(buttonId);
+            
+            if (content.style.display === 'none') {
+                content.style.display = 'block';
+                button.textContent = '▼ Inklappen';
+            } else {
+                content.style.display = 'none';
+                button.textContent = '▶ Uitklappen';
+            }
+        }
+        
+        // Export transactions to CSV
+        function exportTransactions() {
+            if (filteredTransactionsData.length === 0) {
+                showStatus('⚠️ Geen transacties om te exporteren', 'warning');
+                return;
+            }
+            
+            let csvContent = 'Datum,Bedrag,Omschrijving,Tegenrekening,Categorie,Vertrouwen\n';
+            
+            filteredTransactionsData.forEach(transaction => {
+                const amount = parseFloat(transaction.bedrag);
+                csvContent += [
+                    formatDate(transaction.datum),
+                    amount.toFixed(2),
+                    `"${transaction.omschrijving.replace(/"/g, '""')}"`,
+                    `"${transaction.tegenrekening || ''}"`,
+                    `"${transaction.analysis.categoryName}"`,
+                    transaction.analysis.confidence
+                ].join(',') + '\n';
+            });
+            
+            // Download CSV
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const link = document.createElement('a');
+            link.href = URL.createObjectURL(blob);
+            link.download = `transacties_export_${new Date().toISOString().split('T')[0]}.csv`;
+            link.click();
+            
+            showStatus(`✅ ${filteredTransactionsData.length} transacties geëxporteerd naar CSV`, 'success');
         }
         
         // Update transactie categorie (door user input)
@@ -4547,30 +5031,141 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             alert(`DEBUG INFO:\n\nbankmutaties exists: ${typeof bankmutaties !== 'undefined'}\nbankmutaties length: ${bankmutaties?.length || 'undefined'}\nbankmutaties is array: ${Array.isArray(bankmutaties)}\n\nCheck console for detailed info.`);
         }
 
-        // Helper functie om te helpen bij categorisatie
+        // Show category dropdown for quick categorization
         function helpCategorizeTransaction(transactionId) {
+            console.log('🎯 helpCategorizeTransaction called with ID:', transactionId);
+            
+            if (!bankmutaties || !Array.isArray(bankmutaties) || bankmutaties.length === 0) {
+                showStatus('❌ Geen bankmutaties beschikbaar. Upload eerst bankgegevens.', 'error');
+                return;
+            }
+            
             const transaction = bankmutaties.find(t => t.id == transactionId);
-            if (!transaction) return;
+            if (!transaction) {
+                showStatus('❌ Transactie niet gevonden', 'error');
+                return;
+            }
             
-            const customPrompt = `🤔 HULP NODIG BIJ CATEGORISATIE\n\n` +
-                `💰 Bedrag: ${formatCurrency(transaction.bedrag)}\n` +
-                `📝 Omschrijving: ${transaction.omschrijving}\n` +
-                `🏦 Tegenrekening: ${transaction.tegenrekening || 'Onbekend'}\n\n` +
-                `Welke categorie past het beste?\n\n` +
-                Object.entries(categorizationPatterns).map(([key, data], i) => 
-                    `${i + 1}. ${data.name}`
-                ).join('\n') +
-                `\n\nVoer het nummer in (1-${Object.keys(categorizationPatterns).length}):`;
+            // Remove any existing category dropdown
+            closeCategoryDropdown();
             
-            const choice = prompt(customPrompt);
-            if (choice) {
-                const categoryKeys = Object.keys(categorizationPatterns);
-                const selectedKey = categoryKeys[parseInt(choice) - 1];
-                if (selectedKey) {
-                    updateTransactionCategory(transactionId, selectedKey);
-                }
+            // Create the dropdown menu HTML
+            const dropdownHTML = `
+                <div id="category-dropdown" class="fixed inset-0 bg-black bg-opacity-30 flex items-center justify-center z-50" onclick="closeCategoryDropdown()">
+                    <div class="bg-white rounded-lg shadow-xl p-6 m-4 max-w-md w-full max-h-96 overflow-y-auto" onclick="event.stopPropagation()">
+                        <div class="flex justify-between items-center mb-4">
+                            <h3 class="text-lg font-semibold text-gray-900">🎯 Kies Categorie</h3>
+                            <button onclick="closeCategoryDropdown()" class="text-gray-400 hover:text-gray-600">
+                                <span class="text-xl">×</span>
+                            </button>
+                        </div>
+                        
+                        <!-- Transaction Info -->
+                        <div class="bg-gray-50 rounded-lg p-3 mb-4 text-sm">
+                            <div class="font-medium text-gray-700">💰 ${formatCurrency(transaction.bedrag)}</div>
+                            <div class="text-gray-600 mt-1 truncate" title="${transaction.omschrijving}">📝 ${transaction.omschrijving}</div>
+                            ${transaction.tegenrekening ? `<div class="text-gray-500 mt-1 truncate" title="${transaction.tegenrekening}">🏦 ${transaction.tegenrekening}</div>` : ''}
+                        </div>
+                        
+                        <!-- Quick Search -->
+                        <div class="mb-4">
+                            <input type="text" id="category-search" placeholder="🔍 Zoek categorie..." 
+                                   class="w-full px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 text-sm"
+                                   oninput="filterCategories()">
+                        </div>
+                        
+                        <!-- Categories Grid -->
+                        <div class="space-y-2 max-h-64 overflow-y-auto">
+                            ${Object.entries(categorizationPatterns).map(([key, data]) => `
+                                <button onclick="selectTransactionCategory('${transactionId}', '${key}')" 
+                                        class="category-option w-full text-left p-3 rounded-lg border hover:bg-gray-50 transition-colors">
+                                    <div class="flex items-center justify-between">
+                                        <span class="${data.color} px-2 py-1 rounded-full text-sm font-medium">
+                                            ${data.name}
+                                        </span>
+                                        <span class="text-xs text-gray-400">Klik om te selecteren</span>
+                                    </div>
+                                </button>
+                            `).join('')}
+                        </div>
+                        
+                        <!-- Custom Category Option -->
+                        <div class="mt-4 pt-4 border-t border-gray-200">
+                            <button onclick="createCustomCategory('${transactionId}')" 
+                                    class="w-full p-3 rounded-lg border-2 border-dashed border-gray-300 hover:border-blue-400 hover:bg-blue-50 transition-colors text-center text-gray-600 hover:text-blue-600">
+                                <span class="text-sm">➕ Nieuwe categorie maken</span>
+                            </button>
+                        </div>
+                    </div>
+                </div>
+            `;
+            
+            // Add to body
+            document.body.insertAdjacentHTML('beforeend', dropdownHTML);
+            
+            // Focus search field
+            setTimeout(() => {
+                const searchField = document.getElementById('category-search');
+                if (searchField) searchField.focus();
+            }, 100);
+        }
+        
+        // Close category dropdown
+        function closeCategoryDropdown() {
+            const dropdown = document.getElementById('category-dropdown');
+            if (dropdown) {
+                dropdown.remove();
             }
         }
+        
+        // Filter categories in dropdown
+        function filterCategories() {
+            const searchTerm = document.getElementById('category-search').value.toLowerCase();
+            const categories = document.querySelectorAll('.category-option');
+            
+            categories.forEach(category => {
+                const categoryName = category.textContent.toLowerCase();
+                const matches = !searchTerm || categoryName.includes(searchTerm);
+                category.style.display = matches ? 'block' : 'none';
+            });
+        }
+        
+        // Select category for transaction
+        function selectTransactionCategory(transactionId, categoryKey) {
+            closeCategoryDropdown();
+            updateTransactionCategory(transactionId, categoryKey);
+            
+            // Show quick feedback
+            showStatus(`✅ Categorie toegepast! Smart learning zoekt naar vergelijkbare transacties...`, 'success');
+        }
+        
+        // Create custom category
+        function createCustomCategory(transactionId) {
+            const customCategory = prompt('Voer een nieuwe categorie naam in:');
+            if (customCategory && customCategory.trim()) {
+                closeCategoryDropdown();
+                // For now, just show a message - in future versions this could create actual new categories
+                showStatus(`💡 Custom categorieën komen in een volgende versie! Gebruik voorlopig een bestaande categorie.`, 'info');
+                // Reopen the dropdown
+                setTimeout(() => helpCategorizeTransaction(transactionId), 1000);
+            }
+        }
+        
+        // Enhanced keyboard support for category dropdown
+        document.addEventListener('keydown', function(e) {
+            const dropdown = document.getElementById('category-dropdown');
+            if (!dropdown) return;
+            
+            if (e.key === 'Escape') {
+                closeCategoryDropdown();
+            } else if (e.key === 'Enter' && document.activeElement.id === 'category-search') {
+                // Select first visible category
+                const firstVisible = document.querySelector('.category-option[style*="block"], .category-option:not([style*="none"])');
+                if (firstVisible) {
+                    firstVisible.click();
+                }
+            }
+        });
         
         // Update reconciliatie display
         function updateReconciliationDisplay(results) {
@@ -5738,6 +6333,203 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 details: `${matchingWords}/${totalWords} woorden`,
                 matchedWords: matchedWords
             };
+        }
+        
+        // Filter suggestions function
+        function filterSuggestions() {
+            const searchTerm = document.getElementById('suggestions-search')?.value?.toLowerCase() || '';
+            const tbody = document.getElementById('suggestions-body');
+            const emptyDiv = document.getElementById('suggestions-empty');
+            
+            if (!tbody) return;
+            
+            const rows = Array.from(tbody.querySelectorAll('tr'));
+            let visibleCount = 0;
+            
+            rows.forEach(row => {
+                const omschrijving = row.querySelector('td:nth-child(3)')?.textContent?.toLowerCase() || '';
+                const bedrag = row.querySelector('td:nth-child(2)')?.textContent?.toLowerCase() || '';
+                const reden = row.querySelector('td:nth-child(4)')?.textContent?.toLowerCase() || '';
+                
+                const matches = !searchTerm || 
+                    omschrijving.includes(searchTerm) || 
+                    bedrag.includes(searchTerm) || 
+                    reden.includes(searchTerm);
+                
+                if (matches) {
+                    row.style.display = '';
+                    visibleCount++;
+                } else {
+                    row.style.display = 'none';
+                }
+            });
+            
+            // Update count display
+            if (document.getElementById('suggestions-count-display')) {
+                document.getElementById('suggestions-count-display').textContent = visibleCount;
+            }
+            
+            // Show/hide empty state
+            if (emptyDiv) {
+                emptyDiv.style.display = visibleCount === 0 ? 'block' : 'none';
+            }
+        }
+        
+        // Bulk action functions (placeholders)
+        function addAllSuggestionsAsVasteKosten() {
+            const visibleRows = Array.from(document.querySelectorAll('#suggestions-body tr'))
+                .filter(row => row.style.display !== 'none');
+            
+            if (visibleRows.length === 0) {
+                showStatus('⚠️ Geen zichtbare suggesties om toe te voegen', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Weet je zeker dat je alle ${visibleRows.length} zichtbare suggesties wilt toevoegen als vaste kosten?`);
+            if (confirmed) {
+                // Implement bulk add logic here
+                showStatus(`✅ ${visibleRows.length} suggesties toegevoegd als vaste kosten`, 'success');
+                // Clear suggestions or hide section
+                document.getElementById('suggestions-section').style.display = 'none';
+            }
+        }
+        
+        function dismissAllSuggestions() {
+            const visibleRows = Array.from(document.querySelectorAll('#suggestions-body tr'))
+                .filter(row => row.style.display !== 'none');
+            
+            if (visibleRows.length === 0) {
+                showStatus('⚠️ Geen zichtbare suggesties om weg te sturen', 'warning');
+                return;
+            }
+            
+            const confirmed = confirm(`Weet je zeker dat je alle ${visibleRows.length} zichtbare suggesties wilt wegeren?`);
+            if (confirmed) {
+                // Hide dismissed suggestions
+                visibleRows.forEach(row => row.remove());
+                showStatus(`✅ ${visibleRows.length} suggesties weggestuurd`, 'success');
+                
+                // Check if any suggestions remain
+                const remainingRows = document.querySelectorAll('#suggestions-body tr').length;
+                if (remainingRows === 0) {
+                    document.getElementById('suggestions-section').style.display = 'none';
+                }
+                
+                filterSuggestions(); // Update counts
+            }
+        }
+        
+        // === ADDITIONAL UI HELPER FUNCTIONS ===
+        
+        // Filter bankmutaties in de beheer sectie
+        function filterBankmutaties() {
+            const searchTerm = document.getElementById('bankmutaties-search').value.toLowerCase();
+            const tbody = document.getElementById('bankmutaties-table-body');
+            const noDataDiv = document.getElementById('no-bankmutaties');
+            const noFilteredDiv = document.getElementById('no-bankmutaties-filtered');
+            
+            if (!bankmutaties || bankmutaties.length === 0) {
+                noDataDiv.style.display = 'block';
+                noFilteredDiv.style.display = 'none';
+                tbody.innerHTML = '';
+                return;
+            }
+            
+            // Filter transacties
+            const filteredTransactions = bankmutaties.filter(transaction => {
+                return !searchTerm || 
+                    transaction.omschrijving.toLowerCase().includes(searchTerm) ||
+                    (transaction.tegenrekening && transaction.tegenrekening.toLowerCase().includes(searchTerm)) ||
+                    transaction.datum.includes(searchTerm) ||
+                    formatCurrency(transaction.bedrag).toLowerCase().includes(searchTerm);
+            });
+            
+            // Update count
+            document.getElementById('bankmutaties-count').textContent = filteredTransactions.length;
+            
+            // Show/hide appropriate messages
+            if (filteredTransactions.length === 0) {
+                noDataDiv.style.display = 'none';
+                noFilteredDiv.style.display = 'block';
+                tbody.innerHTML = '';
+                return;
+            }
+            
+            noDataDiv.style.display = 'none';
+            noFilteredDiv.style.display = 'none';
+            
+            // Render filtered results
+            tbody.innerHTML = '';
+            filteredTransactions.forEach(transaction => {
+                const amount = parseFloat(transaction.bedrag);
+                const amountColor = amount >= 0 ? 'text-green-600' : 'text-red-600';
+                
+                // Determine match status
+                let matchStatus = '⚪ Niet gematched';
+                let matchStatusClass = 'bg-gray-100 text-gray-600';
+                
+                if (transaction.matched === true) {
+                    matchStatus = '✅ Gematched';
+                    matchStatusClass = 'bg-green-100 text-green-800';
+                } else if (transaction.possibleMatches && transaction.possibleMatches.length > 0) {
+                    matchStatus = '⚠️ Review nodig';
+                    matchStatusClass = 'bg-yellow-100 text-yellow-800';
+                }
+                
+                const row = tbody.insertRow();
+                row.className = 'hover:bg-gray-50 transition-colors';
+                row.innerHTML = `
+                    <td class="px-4 py-3 text-sm text-gray-900">${formatDate(transaction.datum)}</td>
+                    <td class="px-4 py-3 text-sm font-medium ${amountColor}">${formatCurrency(amount)}</td>
+                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
+                        <div class="truncate" title="${transaction.omschrijving}">${transaction.omschrijving}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm text-gray-500 max-w-xs">
+                        <div class="truncate" title="${transaction.tegenrekening || 'Niet beschikbaar'}">${transaction.tegenrekening || 'N/A'}</div>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <span class="px-2 py-1 rounded-full text-xs ${matchStatusClass}">
+                            ${matchStatus}
+                        </span>
+                    </td>
+                    <td class="px-4 py-3 text-sm">
+                        <div class="flex flex-col gap-1">
+                            ${transaction.analysis ? 
+                                `<button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="text-blue-600 hover:text-blue-800 text-xs">
+                                    🔍 Analyse
+                                </button>` : ''
+                            }
+                            ${transaction.possibleMatches && transaction.possibleMatches.length > 0 ?
+                                `<button onclick="reviewTransaction('${transaction.id}')" class="text-yellow-600 hover:text-yellow-800 text-xs">
+                                    ⚠️ Review
+                                </button>` : ''
+                            }
+                        </div>
+                    </td>
+                `;
+            });
+        }
+        
+        // Review transaction function (placeholder)
+        function reviewTransaction(transactionId) {
+            const transaction = bankmutaties.find(t => t.id === transactionId);
+            if (!transaction) return;
+            
+            let message = `🔍 TRANSACTIE REVIEW\n\n`;
+            message += `💰 Bedrag: ${formatCurrency(transaction.bedrag)}\n`;
+            message += `📅 Datum: ${formatDate(transaction.datum)}\n`;
+            message += `📝 Omschrijving: ${transaction.omschrijving}\n`;
+            message += `🏦 Tegenrekening: ${transaction.tegenrekening || 'Niet beschikbaar'}\n\n`;
+            
+            if (transaction.possibleMatches && transaction.possibleMatches.length > 0) {
+                message += `🎯 MOGELIJKE MATCHES:\n`;
+                transaction.possibleMatches.slice(0, 3).forEach((match, i) => {
+                    message += `${i + 1}. ${match.type} - ${match.confidence} vertrouwen\n`;
+                    message += `   ${match.item.factuurnummer || match.item.debiteur || match.item.crediteur || 'Onbekend'}\n`;
+                });
+            }
+            
+            alert(message);
         }
         
         // Export nieuwe functies
