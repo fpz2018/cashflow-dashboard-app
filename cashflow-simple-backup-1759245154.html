@@ -248,7 +248,12 @@
                     <button onclick="setActiveTab('credit-facturen')" id="tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔄 Credit Facturen
                     </button>
-
+                    <button onclick="setActiveTab('credit-declaraties')" id="tab-credit-declaraties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        ↩️ Credit Declaraties
+                    </button>
+                    <button onclick="setActiveTab('correctie-facturen')" id="tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔧 Correctie Facturen
+                    </button>
                     <button onclick="setActiveTab('bankmutaties')" id="tab-bankmutaties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏦 Bankmutaties
                     </button>
@@ -371,7 +376,45 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 </button>
             </div>
 
+            <!-- Credit Declaraties Upload (verborgen standaard) -->
+            <div id="upload-credit-declaraties" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">↩️ Credit Declaraties Uploaden (Verzekeraars)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Verzekeraar | Originele Factuur | Bedrag<br>
+                        💰 <strong>Bedrag:</strong> Positief getal voor credit (systeem zoekt originele declaratie)<br>
+                        🔍 <strong>Matching:</strong> Originele factuur wordt automatisch gezocht en gecorrigeerd<br>
+                        🔄 <strong>Voorbeeld:</strong> CD202500009600 | 24-9-2025 | a.s.r. Zorg | 202500009600 | € 155,27
+                    </p>
+                    <textarea id="credit-declaraties-data" placeholder="CD202500009600	24-9-2025	a.s.r. Zorg	202500009600	€ 155,27
+CD202500009601	25-9-2025	CZ Zorgverzekeringen	202500009601	€ 89,50
+CD202500009602	26-9-2025	VGZ	202500009602	€ 125,00" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processCreditDeclaraties()" class="px-6 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors">
+                    Credit Declaraties Verwerken
+                </button>
+            </div>
 
+            <!-- Correctie Facturen Upload (verborgen standaard) -->
+            <div id="upload-correctie-facturen" class="upload-section hidden">
+                <div class="mb-4">
+                    <h4 class="font-medium text-gray-900 mb-2">🔧 Correctie Facturen Uploaden (Verzekeraars)</h4>
+                    <p class="text-sm text-gray-600 mb-3">
+                        📋 <strong>Excel Copy-Paste:</strong> Selecteer de kolommen in Excel en plak hier<br>
+                        📊 <strong>Volgorde:</strong> Factuurnummer | Datum | Verzekeraar | Originele Factuur | Bedrag<br>
+                        💰 <strong>Bedrag:</strong> Kan positief (bijboeking) of negatief (correctie) zijn<br>
+                        🔍 <strong>Matching:</strong> Originele factuur wordt automatisch gezocht en bijgewerkt<br>
+                        🔄 <strong>Voorbeeld:</strong> CO202500009600 | 24-9-2025 | a.s.r. Zorg | 202500009600 | € 25,00
+                    </p>
+                    <textarea id="correctie-facturen-data" placeholder="CO202500009600	24-9-2025	a.s.r. Zorg	202500009600	€ 25,00
+CO202500009601	25-9-2025	CZ Zorgverzekeringen	202500009601	€ -10,00
+CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-2 border border-gray-300 rounded-md focus:outline-none focus:ring-2 focus:ring-blue-500 font-mono text-sm"></textarea>
+                </div>
+                <button onclick="processCorrectieFacturen()" class="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
+                    Correctie Facturen Verwerken
+                </button>
+            </div>
 
             <!-- Bankmutaties Upload (verborgen standaard) -->
             <div id="upload-bankmutaties" class="upload-section hidden">
@@ -416,17 +459,9 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     </label>
                 </div>
                 
-                <div class="flex flex-col sm:flex-row gap-3">
-                    <button onclick="processBankmutaties()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                        Bankmutaties Verwerken
-                    </button>
-                    <button onclick="runFinancialAnalysis()" class="px-6 py-2 bg-purple-500 text-white rounded-md hover:bg-purple-600 transition-colors">
-                        🧠 Slimme Analyse
-                    </button>
-                    <button onclick="debugBankmutaties()" class="px-4 py-2 bg-gray-500 text-white rounded-md hover:bg-gray-600 transition-colors text-sm">
-                        🔍 Debug
-                    </button>
-                </div>
+                <button onclick="processBankmutaties()" class="px-6 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
+                    Bankmutaties Verwerken
+                </button>
             </div>
 
             <!-- Status Display -->
@@ -554,94 +589,6 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             </div>
         </div>
 
-        <!-- Financiële Analyse Sectie -->
-        <div id="financial-analysis-section" class="bg-white rounded-lg shadow-sm p-6 mb-8" style="display: none;">
-            <div class="flex justify-between items-center mb-4">
-                <h3 class="text-xl font-semibold text-gray-900">🧠 Slimme Financiële Analyse</h3>
-                <button onclick="runFinancialAnalysis()" class="px-4 py-2 bg-blue-500 text-white rounded-md hover:bg-blue-600 transition-colors">
-                    🔍 Analyseer Transacties
-                </button>
-            </div>
-            
-            <!-- Analyse Samenvatting -->
-            <div id="analysis-summary" class="grid grid-cols-1 md:grid-cols-4 gap-4 mb-6" style="display: none;">
-                <div class="bg-green-50 border border-green-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-green-900 mb-1">✅ Gecategoriseerd</h4>
-                    <div class="text-2xl font-bold text-green-700" id="categorized-count">0</div>
-                    <div class="text-sm text-green-600">Automatisch herkend</div>
-                </div>
-                <div class="bg-yellow-50 border border-yellow-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-yellow-900 mb-1">❓ Hulp Nodig</h4>
-                    <div class="text-2xl font-bold text-yellow-700" id="needs-help-count">0</div>
-                    <div class="text-sm text-yellow-600">Handmatige review</div>
-                </div>
-                <div class="bg-blue-50 border border-blue-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-blue-900 mb-1">💰 Inkomsten</h4>
-                    <div class="text-lg font-bold text-green-600" id="total-income">€ 0</div>
-                    <div class="text-sm text-blue-600">Totaal ontvangen</div>
-                </div>
-                <div class="bg-red-50 border border-red-200 rounded-lg p-4">
-                    <h4 class="font-semibold text-red-900 mb-1">💸 Uitgaven</h4>
-                    <div class="text-lg font-bold text-red-600" id="total-expenses">€ 0</div>
-                    <div class="text-sm text-red-600">Totaal uitgegeven</div>
-                </div>
-            </div>
-            
-            <!-- Categorieën Overzicht -->
-            <div id="categories-overview" class="mb-6" style="display: none;">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3">📊 Categorieën Overzicht</h4>
-                <div id="categories-grid" class="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-                    <!-- Dynamically filled -->
-                </div>
-            </div>
-            
-            <!-- Transacties die Hulp Nodig Hebben -->
-            <div id="needs-help-section" class="mb-6" style="display: none;">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3">❓ Transacties die Hulp Nodig Hebben</h4>
-                <p class="text-sm text-gray-600 mb-4">
-                    Deze transacties kon ik niet automatisch categoriseren. Help me door de juiste categorie te kiezen:
-                </p>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Huidige Gok</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Correcte Categorie</th>
-                            </tr>
-                        </thead>
-                        <tbody id="needs-help-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Dynamically filled -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-            
-            <!-- Alle Geanalyseerde Transacties -->
-            <div id="all-transactions-section" style="display: none;">
-                <h4 class="text-lg font-semibold text-gray-900 mb-3">📋 Alle Geanalyseerde Transacties</h4>
-                <div class="overflow-x-auto">
-                    <table class="min-w-full divide-y divide-gray-200">
-                        <thead class="bg-gray-50">
-                            <tr>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Datum</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Bedrag</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Omschrijving</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Categorie</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Vertrouwen</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">Details</th>
-                            </tr>
-                        </thead>
-                        <tbody id="all-transactions-table" class="bg-white divide-y divide-gray-200">
-                            <!-- Dynamically filled -->
-                        </tbody>
-                    </table>
-                </div>
-            </div>
-        </div>
-
         <!-- Demo Data Sectie -->
         <div class="bg-blue-50 border border-blue-200 rounded-lg p-6 mb-8">
             <h3 class="text-lg font-semibold text-blue-900 mb-3">🎯 Demo Data</h3>
@@ -675,7 +622,12 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     <button onclick="setBeheerTab('credit-facturen')" id="beheer-tab-credit-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔄 Credit Facturen (<span id="credit-facturen-count">0</span>)
                     </button>
-
+                    <button onclick="setBeheerTab('credit-declaraties')" id="beheer-tab-credit-declaraties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        ↩️ Credit Declaraties (<span id="credit-declaraties-count">0</span>)
+                    </button>
+                    <button onclick="setBeheerTab('correctie-facturen')" id="beheer-tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        🔧 Correcties (<span id="correctie-facturen-count">0</span>)
+                    </button>
                     <button onclick="setBeheerTab('variabele-uitgaven')" id="beheer-tab-variabele-uitgaven" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         📋 Variabele Uitgaven (<span id="variabele-uitgaven-count">0</span>)
                     </button>
@@ -857,7 +809,73 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 </div>
             </div>
 
+            <!-- Credit Declaraties Beheer (Verzekeraars) -->
+            <div id="beheer-credit-declaraties" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Credit Declaraties (Verzekeraars)
+                    </h4>
+                    <button onclick="deleteAllCreditDeclaraties()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Originele Factuur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Match</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="credit-declaraties-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-credit-declaraties" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen credit declaraties geïmporteerd
+                    </div>
+                </div>
+            </div>
 
+            <!-- Correctie Facturen Beheer (Verzekeraars) -->
+            <div id="beheer-correctie-facturen" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Correctie Facturen (Verzekeraars)
+                    </h4>
+                    <button onclick="deleteAllCorrectieFacturen()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                        🗑️ Alles Verwijderen
+                    </button>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verzekeraar</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Originele Factuur</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Status Match</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="correctie-facturen-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-correctie-facturen" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen correctie facturen geïmporteerd
+                    </div>
+                </div>
+            </div>
 
             <!-- Variabele Uitgaven Beheer -->
             <div id="beheer-variabele-uitgaven" class="beheer-section hidden">
@@ -1443,8 +1461,199 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         }
 
         // Verwerk credit declaraties (verzekeraars)
+        function processCreditDeclaraties() {
+            console.log('🎯 processCreditDeclaraties() aangeroepen');
+            const data = document.getElementById('credit-declaraties-data').value.trim();
+            console.log('📝 Data opgehaald:', data);
+            if (!data) {
+                console.log('⚠️ Geen data - functie stopt');
+                showStatus('⚠️ Geen credit declaraties data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Credit declaraties aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                let matchedCount = 0;
+                
+                console.log(`📊 Processing ${lines.length} lines for credit declaraties:`, lines);
+                lines.forEach((line, index) => {
+                    if (line.trim() && !line.toLowerCase().includes('factuur\tdatum')) {
+                        console.log(`📝 Processing credit declaratie line ${index}: "${line}"`);
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        console.log(`🔧 Credit declaratie columns (${columns.length}):`, columns);
+                        if (columns.length >= 5) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const verzekeraar = columns[2]?.trim();
+                            const origineelFactuur = columns[3]?.trim();
+                            const bedragStr = columns[4]?.trim();
+                            
+                            if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
+                                // Parse bedrag
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
+                                
+                                console.log(`💰 Credit Declaraties - Parsing: "${bedragStr}" -> ${bedrag}, date: "${datum}" -> "${isoDate}"`);
+                                
+                                if (!isNaN(bedrag) && bedrag !== 0) {
+                                    const creditDeclaratie = {
+                                        factuur,
+                                        datum: isoDate,
+                                        verzekeraar,
+                                        origineelFactuur,
+                                        bedrag: Math.abs(bedrag), // Altijd positief voor credits
+                                        matched: false,
+                                        matchedDeclaratieIndex: -1
+                                    };
+                                    
+                                    // Zoek originele declaratie om te matchen
+                                    const matchIndex = declaraties.findIndex(decl => 
+                                        decl.factuurnummer === origineelFactuur
+                                    );
+                                    
+                                    if (matchIndex >= 0) {
+                                        creditDeclaratie.matched = true;
+                                        creditDeclaratie.matchedDeclaratieIndex = matchIndex;
+                                        matchedCount++;
+                                        
+                                        // Verlaag het bedrag van de originele declaratie
+                                        declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag - bedrag);
+                                        console.log(`🔄 Credit toegepast: ${origineelFactuur} verlaagd met €${bedrag}`);
+                                    } else {
+                                        console.log(`❌ Geen match gevonden voor originele factuur: ${origineelFactuur}`);
+                                    }
+                                    
+                                    console.log(`✅ Credit declaratie accepted:`, creditDeclaratie);
+                                    parsed.push(creditDeclaratie);
+                                } else {
+                                    console.log(`❌ Credit declaratie rejected:`, { factuur, datum, verzekeraar, origineelFactuur, bedrag, isNaN: isNaN(bedrag), isNotZero: bedrag !== 0, hasFactuur: !!factuur, hasDatum: !!datum, hasVerzekeraar: !!verzekeraar, hasOrigineelFactuur: !!origineelFactuur, hasBedragStr: !!bedragStr });
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan credit declaraties array
+                console.log(`📦 Adding ${parsed.length} credit declaraties to array. Current array length: ${creditDeclaraties.length}`);
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, creditDeclaraties, ['factuur', 'datum', 'bedrag']);
+                
+                creditDeclaraties.push(...duplicateCheck.unique);
+                console.log(`📦 New credit declaraties array length: ${creditDeclaraties.length}`);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe credit declaraties verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} credit declaraties verwerkt en opgeslagen! ${matchedCount} gematcht en toegepast.`, 'success');
+                }
+                document.getElementById('credit-declaraties-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken credit declaraties:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
 
         // Verwerk correctie facturen (verzekeraars)
+        function processCorrectieFacturen() {
+            const data = document.getElementById('correctie-facturen-data').value.trim();
+            if (!data) {
+                showStatus('⚠️ Geen correctie facturen data ingevoerd', 'warning');
+                return;
+            }
+
+            showStatus('🔄 Correctie facturen aan het verwerken...', 'info');
+            
+            try {
+                const lines = data.split('\n');
+                const parsed = [];
+                let matchedCount = 0;
+                
+                lines.forEach((line, index) => {
+                    if (line.trim()) {
+                        // Support voor Excel copy-paste (tab-gescheiden)
+                        const columns = line.includes('\t') ? line.split('\t') : line.split(';');
+                        if (columns.length >= 5) {
+                            const factuur = columns[0]?.trim();
+                            const datum = columns[1]?.trim();
+                            const verzekeraar = columns[2]?.trim();
+                            const origineelFactuur = columns[3]?.trim();
+                            const bedragStr = columns[4]?.trim();
+                            
+                            if (factuur && datum && verzekeraar && origineelFactuur && bedragStr) {
+                                // Parse bedrag (kan positief of negatief zijn)
+                                const bedrag = parseBedrag(bedragStr);
+                                const isoDate = convertDutchDateToISO(datum);
+                                
+                                console.log(`💰 Correctie Facturen - Parsing: "${bedragStr}" -> ${bedrag}, date: "${datum}" -> "${isoDate}"`);
+                                
+                                if (!isNaN(bedrag) && bedrag !== 0) {
+                                    const correctieFactuur = {
+                                        factuur,
+                                        datum: isoDate,
+                                        verzekeraar,
+                                        origineelFactuur,
+                                        bedrag,
+                                        matched: false,
+                                        matchedDeclaratieIndex: -1
+                                    };
+                                    
+                                    // Zoek originele declaratie om te matchen
+                                    const matchIndex = declaraties.findIndex(decl => 
+                                        decl.factuurnummer === origineelFactuur
+                                    );
+                                    
+                                    if (matchIndex >= 0) {
+                                        correctieFactuur.matched = true;
+                                        correctieFactuur.matchedDeclaratieIndex = matchIndex;
+                                        matchedCount++;
+                                        
+                                        // Pas correctie toe op de originele declaratie
+                                        declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag + bedrag);
+                                        console.log(`🔧 Correctie toegepast: ${origineelFactuur} aangepast met €${bedrag}`);
+                                    }
+                                    
+                                    parsed.push(correctieFactuur);
+                                }
+                            }
+                        }
+                    }
+                });
+                
+                // Voeg toe aan correctie facturen array
+                // Check for duplicates
+                const duplicateCheck = findDuplicates(parsed, correctieFacturen, ['factuur', 'datum', 'bedrag']);
+                
+                correctieFacturen.push(...duplicateCheck.unique);
+                
+                // Save to storage
+                saveDataToStorage();
+                
+                const addedCount = duplicateCheck.unique.length;
+                if (duplicateCheck.duplicates.length > 0) {
+                    showStatus(`✅ ${addedCount} nieuwe correctie facturen verwerkt (${duplicateCheck.duplicates.length} duplicaten overgeslagen)`, 'success');
+                } else {
+                    showStatus(`✅ ${addedCount} correctie facturen verwerkt en opgeslagen! ${matchedCount} gematcht en toegepast.`, 'success');
+                }
+                document.getElementById('correctie-facturen-data').value = '';
+                updatePrognose();
+                updateDataTables();
+                
+            } catch (error) {
+                console.error('Fout bij verwerken correctie facturen:', error);
+                showStatus(`❌ Fout bij verwerken: ${error.message}`, 'error');
+            }
+        }
 
         // Verwerk particulier facturen
         function processParticulierFacturen() {
@@ -1899,7 +2108,8 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             updateVerzekeraarsTable();
             updateParticulierFacturenTable();
             updateCreditFacturenTable();
-
+            updateCreditDeclaratiesTable();
+            updateCorrectieFacturenTable();
             updateVariabeleUitgavenTable();
             updateBankmutatiësTable();
             updateCounts();
@@ -1912,25 +2122,75 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             document.getElementById('verzekeraars-count').textContent = customVerzekeraars.length;
             document.getElementById('particulier-facturen-count').textContent = particulierFacturen.length;
             document.getElementById('credit-facturen-count').textContent = creditFacturen.length;
-
+            document.getElementById('credit-declaraties-count').textContent = creditDeclaraties.length;
+            document.getElementById('correctie-facturen-count').textContent = correctieFacturen.length;
             document.getElementById('variabele-uitgaven-count').textContent = variabeleUitgaven.length;
         }
 
         // Bereken netto bedrag voor een declaratie (origineel - credits - correcties)
         function calculateDeclaratieNettoInfo(declaratie) {
             const originalAmount = parseFloat(declaratie.bedrag);
+            let totalCredits = 0;
+            let totalCorrections = 0;
+            const appliedCredits = [];
+            const appliedCorrections = [];
             
-            // Since credit declaraties and correctie facturen are removed, 
-            // this function now just returns the original amount
+            console.log(`🔍 Checking credits for declaratie ${declaratie.factuurnummer} (datum: ${declaratie.datum}):`);
+            console.log(`   Available creditDeclaraties: ${creditDeclaraties?.length || 0}`);
+            console.log(`   Available correctieFacturen: ${correctieFacturen?.length || 0}`);
+            if (creditDeclaraties?.length > 0) {
+                console.log(`   Sample creditDeclaratie:`, creditDeclaraties[0]);
+            }
+            if (correctieFacturen?.length > 0) {
+                console.log(`   Sample correctieFactuur:`, correctieFacturen[0]);
+            }
+            
+            // Zoek matching credit declaraties op factuurnummer/factuur
+            creditDeclaraties?.forEach(credit => {
+                const creditFactuur = credit.factuurnummer || credit.factuur;
+                if (creditFactuur && declaratie.factuurnummer && 
+                    creditFactuur === declaratie.factuurnummer) {
+                    console.log(`   ✅ Found credit declaratie match: ${creditFactuur} = ${declaratie.factuurnummer}`);
+                    const creditAmount = Math.abs(parseFloat(credit.bedrag));
+                    totalCredits += creditAmount;
+                    appliedCredits.push({
+                        type: 'credit_declaratie',
+                        amount: creditAmount,
+                        datum: credit.datum,
+                        reden: credit.reden || 'Credit declaratie'
+                    });
+                }
+            });
+            
+            // Zoek matching correctie facturen op factuurnummer/factuur
+            correctieFacturen?.forEach(correctie => {
+                const correctieFactuur = correctie.factuurnummer || correctie.factuur;
+                if (correctieFactuur && declaratie.factuurnummer && 
+                    correctieFactuur === declaratie.factuurnummer) {
+                    console.log(`   ✅ Found correctie match: ${correctieFactuur} = ${declaratie.factuurnummer}`);
+                    const correctieAmount = Math.abs(parseFloat(correctie.bedrag));
+                    totalCorrections += correctieAmount;
+                    appliedCorrections.push({
+                        type: 'correctie_factuur',
+                        amount: correctieAmount,
+                        datum: correctie.datum,
+                        reden: correctie.reden || 'Correctie factuur'
+                    });
+                }
+            });
+            
+            const nettoAmount = originalAmount - totalCredits - totalCorrections;
+            const hasCorrections = (appliedCredits.length > 0 || appliedCorrections.length > 0);
+            
             return {
                 originalAmount: originalAmount,
-                totalCredits: 0,
-                totalCorrections: 0,
-                appliedCredits: [],
-                appliedCorrections: [],
-                allCorrections: [],
-                nettoAmount: originalAmount,
-                hasCorrections: false
+                totalCredits: totalCredits,
+                totalCorrections: totalCorrections,
+                nettoAmount: nettoAmount,
+                hasCorrections: hasCorrections,
+                appliedCredits: appliedCredits,
+                appliedCorrections: appliedCorrections,
+                allCorrections: [...appliedCredits, ...appliedCorrections]
             };
         }
 
@@ -2334,6 +2594,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     return;
                 }
                 
+                const oldCredit = creditDeclaraties[editingItem];
                 
                 // Herstel oude matching als die bestond
                 if (oldCredit.matched && oldCredit.matchedDeclaratieIndex >= 0) {
@@ -2362,6 +2623,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag - newCredit.bedrag);
                 }
                 
+                creditDeclaraties[editingItem] = newCredit;
                 
             } else if (editingType === 'correctie-factuur') {
                 const factuur = document.getElementById('edit-factuur').value;
@@ -2375,6 +2637,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     return;
                 }
                 
+                const oldCorrectie = correctieFacturen[editingItem];
                 
                 // Herstel oude matching als die bestond
                 if (oldCorrectie.matched && oldCorrectie.matchedDeclaratieIndex >= 0) {
@@ -2403,6 +2666,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                     declaraties[matchIndex].bedrag = Math.max(0, declaraties[matchIndex].bedrag + newCorrectie.bedrag);
                 }
                 
+                correctieFacturen[editingItem] = newCorrectie;
             }
             
             closeEditModal();
@@ -2723,8 +2987,93 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         }
 
         // Update credit declaraties table
+        function updateCreditDeclaratiesTable() {
+            const tbody = document.getElementById('credit-declaraties-table-body');
+            const noData = document.getElementById('no-credit-declaraties');
+            
+            tbody.innerHTML = '';
+            
+            if (creditDeclaraties.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            creditDeclaraties.forEach((credit, index) => {
+                const matchStatus = credit.matched 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Gematcht</span>'
+                    : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">❌ Niet gevonden</span>';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${credit.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.datum}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${credit.verzekeraar}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">${credit.origineelFactuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        -€ ${credit.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${matchStatus}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editCreditDeclaratie(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteCreditDeclaratie(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
 
         // Update correctie facturen table
+        function updateCorrectieFacturenTable() {
+            const tbody = document.getElementById('correctie-facturen-table-body');
+            const noData = document.getElementById('no-correctie-facturen');
+            
+            tbody.innerHTML = '';
+            
+            if (correctieFacturen.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            correctieFacturen.forEach((correctie, index) => {
+                const matchStatus = correctie.matched 
+                    ? '<span class="bg-green-100 text-green-800 px-2 py-1 rounded text-xs">✅ Gematcht</span>'
+                    : '<span class="bg-red-100 text-red-800 px-2 py-1 rounded text-xs">❌ Niet gevonden</span>';
+                
+                const bedragClass = correctie.bedrag >= 0 ? 'text-green-600' : 'text-red-600';
+                const bedragPrefix = correctie.bedrag >= 0 ? '+' : '';
+                
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${correctie.factuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${correctie.datum}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${correctie.verzekeraar}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-blue-600">${correctie.origineelFactuur}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium ${bedragClass}">
+                        ${bedragPrefix}€ ${correctie.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${matchStatus}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editCorrectieFactuur(${index})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteCorrectieFactuur(${index})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
 
         // === DELETE FUNCTIES VOOR PARTICULIER FACTUREN ===
 
@@ -2758,22 +3107,26 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         }
 
         function deleteCreditDeclaratie(index) {
+            const credit = creditDeclaraties[index];
             if (confirm('Weet je zeker dat je deze credit declaratie wilt verwijderen?')) {
                 // Als het gematcht was, herstel het originele bedrag
                 if (credit.matched && credit.matchedDeclaratieIndex >= 0) {
                     declaraties[credit.matchedDeclaratieIndex].bedrag += credit.bedrag;
                 }
+                creditDeclaraties.splice(index, 1);
                 updateDataTables();
                 updatePrognose();
             }
         }
 
         function deleteCorrectieFactuur(index) {
+            const correctie = correctieFacturen[index];
             if (confirm('Weet je zeker dat je deze correctie factuur wilt verwijderen?')) {
                 // Als het gematcht was, herstel het originele bedrag
                 if (correctie.matched && correctie.matchedDeclaratieIndex >= 0) {
                     declaraties[correctie.matchedDeclaratieIndex].bedrag -= correctie.bedrag;
                 }
+                correctieFacturen.splice(index, 1);
                 updateDataTables();
                 updatePrognose();
             }
@@ -2789,7 +3142,37 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             }
         }
 
+        function deleteAllCreditDeclaraties() {
+            if (confirm(`Weet je zeker dat je alle ${creditDeclaraties.length} credit declaraties wilt verwijderen?`)) {
+                // Herstel alle gematcht bedragen
+                creditDeclaraties.forEach(credit => {
+                    if (credit.matched && credit.matchedDeclaratieIndex >= 0) {
+                        declaraties[credit.matchedDeclaratieIndex].bedrag += credit.bedrag;
+                    }
+                });
+                creditDeclaraties = [];
+                updateDataTables();
+                updatePrognose();
+                saveDataToStorage();
+                showStatus('✅ Alle credit declaraties verwijderd en originele bedragen hersteld!', 'success');
+            }
+        }
 
+        function deleteAllCorrectieFacturen() {
+            if (confirm(`Weet je zeker dat je alle ${correctieFacturen.length} correctie facturen wilt verwijderen?`)) {
+                // Herstel alle gematcht bedragen
+                correctieFacturen.forEach(correctie => {
+                    if (correctie.matched && correctie.matchedDeclaratieIndex >= 0) {
+                        declaraties[correctie.matchedDeclaratieIndex].bedrag -= correctie.bedrag;
+                    }
+                });
+                correctieFacturen = [];
+                updateDataTables();
+                updatePrognose();
+                saveDataToStorage();
+                showStatus('✅ Alle correctie facturen verwijderd en originele bedragen hersteld!', 'success');
+            }
+        }
 
         // === VARIABELE UITGAVEN FUNCTIES ===
 
@@ -2941,6 +3324,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         }
 
         function editCreditDeclaratie(index) {
+            const credit = creditDeclaraties[index];
             editingItem = index;
             editingType = 'credit-declaratie';
             
@@ -2982,6 +3366,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         }
 
         function editCorrectieFactuur(index) {
+            const correctie = correctieFacturen[index];
             editingItem = index;
             editingType = 'correctie-factuur';
             
@@ -3090,7 +3475,8 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         // Functions available in global scope for onclick handlers
         window.processParticulierFacturen = processParticulierFacturen;
         window.processCreditFacturen = processCreditFacturen;
-
+        window.processCreditDeclaraties = processCreditDeclaraties;
+        window.processCorrectieFacturen = processCorrectieFacturen;
 
         // ==================== BANKMUTATIES FUNCTIES ====================
         
@@ -3290,7 +3676,6 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 const addedCount = duplicateCheck.unique.length;
                 console.log(`✅ ${addedCount} nieuwe bankmutaties toegevoegd aan database`);
                 console.log('🗄️ Totale bankmutaties:', bankmutaties.length);
-                console.log('🔍 DEBUG: bankmutaties array na import:', bankmutaties);
                 
                 // Update displays
                 updateDataTables();
@@ -3298,9 +3683,6 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 
                 // Save to storage
                 saveDataToStorage();
-                
-                // Auto-run financial analysis on new data
-                setTimeout(() => runFinancialAnalysis(), 500);
                 
                 // Clear input
                 document.getElementById('bankmutaties-data').value = '';
@@ -3744,834 +4126,6 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             return matrix[str2.length][str1.length];
         }
         
-        // === SLIMME FINANCIËLE ANALYSE ENGINE ===
-        
-        // Database van patronen voor automatische categorisatie - Aangepast aan boekhoudprogramma
-        const categorizationPatterns = {
-            // === OPBRENGSTEN ===
-            
-            // Omzet Zorg - Zorgverzekeraars
-            'omzet_zorgverzekeraars': {
-                name: '💚 Omzet Zorgverzekeraars',
-                color: 'bg-green-100 text-green-800',
-                patterns: [
-                    /a\.s\.r\.?\s*zorg|asr.*zorg/i,
-                    /cz.*zorgverzekeringen|cz.*zorg|cz\s*zorg/i,
-                    /vgz|menzis|zilveren.*kruis/i,
-                    /achmea|nationale.*nederlanden|nn.*zorg/i,
-                    /verzekering.*zorg|zorg.*verzekering/i,
-                    /zorgdomein|vektis|zorg.*en.*zekerheid/i,
-                    /declara.*zorg|zorg.*declaratie/i,
-                    /dbc|zorgverzeker/i
-                ],
-                keywords: ['zorgverzekeraar', 'zorg', 'verzekeraar', 'declaratie'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // Omzet Zorg - Particulieren  
-            'omzet_particulieren': {
-                name: '💙 Omzet Particulieren',
-                color: 'bg-blue-100 text-blue-800',
-                patterns: [
-                    /eigen.*bijdrage|eigenrisico/i,
-                    /patient.*betaling|particulier.*betaling/i,
-                    /contant.*betaling|pin.*betaling/i,
-                    /eigen.*rekening|zelf.*betalen/i,
-                    /particulier|eigen.*bijdrage/i
-                ],
-                keywords: ['particulier', 'patient', 'eigen', 'contant', 'pin'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // Omzet GLI (Gemeente/Lokale Instanties)
-            'omzet_gli': {
-                name: '🏛️ Omzet GLI',
-                color: 'bg-indigo-100 text-indigo-800',
-                patterns: [
-                    /gemeente|gemeentelijke/i,
-                    /wmo|wlz|jeugdwet/i,
-                    /indicatie|pgb/i,
-                    /lokale.*instantie|gemeentelijk/i,
-                    /sociaal.*domein/i
-                ],
-                keywords: ['gemeente', 'wmo', 'indicatie', 'pgb', 'lokaal'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // Omzet Valpreventie
-            'omzet_valpreventie': {
-                name: '🛡️ Omzet Valpreventie', 
-                color: 'bg-teal-100 text-teal-800',
-                patterns: [
-                    /valpreventie|val.*preventie/i,
-                    /vallen.*opstaan|val.*training/i,
-                    /val.*cursus|balans.*training/i,
-                    /preventie.*val/i
-                ],
-                keywords: ['valpreventie', 'val', 'preventie', 'balans'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // Omzet Commercieel - FysioFitness
-            'omzet_fysiofitness': {
-                name: '💪 Omzet FysioFitness',
-                color: 'bg-lime-100 text-lime-800',
-                patterns: [
-                    /fysiofitness|fysio.*fitness/i,
-                    /fitness|sportschool/i,
-                    /personal.*training|pt\s/i,
-                    /groepslessen|groeps.*training/i,
-                    /sport.*begeleiding/i
-                ],
-                keywords: ['fitness', 'sport', 'training', 'groep'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // Omzet Commercieel - Orthomoleculair
-            'omzet_orthomoleculair': {
-                name: '💊 Omzet Orthomoleculair',
-                color: 'bg-purple-100 text-purple-800',
-                patterns: [
-                    /orthomoleculair|ortho.*moleculair/i,
-                    /supplementen|vitaminen/i,
-                    /voedingssupplement|supplement/i,
-                    /ortho.*advies|nutritie/i,
-                    /mineralen|probiotica/i
-                ],
-                keywords: ['orthomoleculair', 'supplement', 'vitaminen', 'nutritie'],
-                amountCheck: (amount) => amount > 0
-            },
-            
-            // === KOSTEN ===
-            
-            // Kosten van grond- en hulpstoffen
-            'kosten_grondhulpstoffen': {
-                name: '📦 Grond- en Hulpstoffen',
-                color: 'bg-orange-100 text-orange-800',
-                patterns: [
-                    /grondstoffen|hulpstoffen|inkoop/i,
-                    /materialen|benodigdheden/i,
-                    /medische.*materialen|therapie.*materialen/i,
-                    /verbruiks.*materialen|disposables/i,
-                    /tape|oefenmateriaal|therapie.*hulpmiddel/i,
-                    /uitbesteed.*werk|uitbesteding/i
-                ],
-                keywords: ['materiaal', 'inkoop', 'hulpstof', 'verbruik', 'uitbesteed'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Personeelskosten - Lonen en Salarissen
-            'kosten_lonen_salarissen': {
-                name: '👨‍💼 Lonen en Salarissen',
-                color: 'bg-red-100 text-red-800',
-                patterns: [
-                    /salaris|loon|salariering/i,
-                    /brutoloon|nettoloon/i,
-                    /uitbetaling.*salaris|loon.*uitbetaling/i,
-                    /personeel.*salaris|medewerker.*salaris/i,
-                    /uurloon|vast.*salaris/i
-                ],
-                keywords: ['salaris', 'loon', 'personeel', 'medewerker', 'uitbetaling'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Personeelskosten - Sociale Lasten
-            'kosten_sociale_lasten': {
-                name: '🏛️ Sociale Lasten',
-                color: 'bg-pink-100 text-pink-800',
-                patterns: [
-                    /sociale.*lasten|uwv|sociale.*verzekering/i,
-                    /pensioenpremie|pensioen.*bijdrage/i,
-                    /ziektekosten.*premie|zkv.*premie/i,
-                    /aov|wao|wia|ziektewet/i,
-                    /werkgever.*premie|sociale.*premie/i
-                ],
-                keywords: ['sociale', 'uwv', 'pensioen', 'premie', 'verzekering'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Personeelskosten - Overige
-            'kosten_overige_personeel': {
-                name: '👥 Overige Personeelskosten',
-                color: 'bg-rose-100 text-rose-800',
-                patterns: [
-                    /opleidingskosten|training.*kosten|cursus.*kosten/i,
-                    /reiskosten.*personeel|personeel.*reis/i,
-                    /werving.*selectie|recruitment/i,
-                    /personeelsfeest|teambuilding/i,
-                    /personeel.*verzekering|personeel.*voorziening/i
-                ],
-                keywords: ['opleiding', 'reis', 'werving', 'personeel', 'training'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Overige Bedrijfskosten - Huisvestingskosten
-            'kosten_huisvesting': {
-                name: '🏠 Huisvestingskosten',
-                color: 'bg-amber-100 text-amber-800',
-                patterns: [
-                    /huur|rent|verhuur.*kosten/i,
-                    /gas|water|elektriciteit|electricity/i,
-                    /energie.*kosten|utilities/i,
-                    /onderhoud.*pand|pand.*onderhoud/i,
-                    /schoonmaak|cleaning|onderhoud/i,
-                    /gemeente|ozb|onroerend.*zaak/i,
-                    /verzekering.*pand|gebouw.*verzekering/i
-                ],
-                keywords: ['huur', 'energie', 'onderhoud', 'pand', 'gemeente'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Overige Bedrijfskosten - Verkoopkosten
-            'kosten_verkoop': {
-                name: '📢 Verkoopkosten',
-                color: 'bg-cyan-100 text-cyan-800',
-                patterns: [
-                    /marketing|reclame|advertentie/i,
-                    /website|internet.*marketing/i,
-                    /brochures|folder|promotiemateriaal/i,
-                    /netwerk.*kosten|relatie.*onderhoud/i,
-                    /google.*ads|facebook.*ads|social.*media/i
-                ],
-                keywords: ['marketing', 'reclame', 'website', 'promotie', 'advertentie'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // Overige Bedrijfskosten - Andere Kosten
-            'kosten_overige': {
-                name: '📋 Andere Kosten',
-                color: 'bg-gray-100 text-gray-800',
-                patterns: [
-                    /accountant|boekhouding|administratie/i,
-                    /verzekering.*bedrijf|beroeps.*aansprakelijkheid/i,
-                    /telefoon|internet|hosting|software/i,
-                    /kantoor.*benodigdheden|bureau.*materiaal/i,
-                    /abonnement|licentie|subscription/i,
-                    /bank.*kosten|rente|financiering/i,
-                    /belasting|btw|fiscaal/i,
-                    /juridisch|advocaat|legal/i,
-                    /kamer.*handel|kvk|registratie/i
-                ],
-                keywords: ['accountant', 'verzekering', 'software', 'kantoor', 'belasting'],
-                amountCheck: (amount) => amount < 0
-            },
-            
-            // === PRIVÉ ===
-            
-            // Privé Opnames/Stortingen
-            'prive_mutaties': {
-                name: '🏠 Privé Opnames/Stortingen',
-                color: 'bg-yellow-100 text-yellow-800',
-                patterns: [
-                    /prive|privé|eigen.*rekening/i,
-                    /opname.*prive|storting.*prive/i,
-                    /persoonlijk|eigen.*gebruik/i,
-                    /prive.*onttrekking|prive.*inleg/i,
-                    /eigen.*naam|particulier.*rekening/i
-                ],
-                keywords: ['privé', 'prive', 'eigen', 'persoonlijk', 'opname', 'storting']
-            }
-        };
-        
-        // Slimme categorisatie functie
-        function analyzeAndCategorizeTransaction(transaction) {
-            const description = transaction.omschrijving.toLowerCase();
-            const amount = parseFloat(transaction.bedrag);
-            const tegenrekening = (transaction.tegenrekening || '').toLowerCase();
-            
-            console.log(`🔍 Analyzing transaction: "${transaction.omschrijving}" (${formatCurrency(amount)})`);
-            
-            let bestMatch = null;
-            let confidence = 0;
-            let reasons = [];
-            
-            // Doorloop alle categorieën
-            for (const [categoryKey, categoryData] of Object.entries(categorizationPatterns)) {
-                let categoryScore = 0;
-                let matchReasons = [];
-                
-                // Check amount filter (voor income)
-                if (categoryData.amountCheck && !categoryData.amountCheck(amount)) {
-                    continue;
-                }
-                
-                // Check patronen in omschrijving
-                for (const pattern of categoryData.patterns) {
-                    if (pattern.test(description)) {
-                        categoryScore += 3; // Hoge score voor pattern match
-                        matchReasons.push(`Pattern match: ${pattern.toString()}`);
-                    }
-                    if (pattern.test(tegenrekening)) {
-                        categoryScore += 2; // Medium score voor tegenrekening match
-                        matchReasons.push(`Account match: ${pattern.toString()}`);  
-                    }
-                }
-                
-                // Check keywords
-                for (const keyword of categoryData.keywords) {
-                    if (description.includes(keyword)) {
-                        categoryScore += 1; // Lage score voor keyword
-                        matchReasons.push(`Keyword: ${keyword}`);
-                    }
-                }
-                
-                // Bewaar beste match
-                if (categoryScore > confidence) {
-                    confidence = categoryScore;
-                    bestMatch = {
-                        category: categoryKey,
-                        name: categoryData.name,
-                        color: categoryData.color,
-                        reasons: matchReasons
-                    };
-                }
-            }
-            
-            // Bepaal confidence level
-            let confidenceLevel = 'unknown';
-            if (confidence >= 3) confidenceLevel = 'high';
-            else if (confidence >= 2) confidenceLevel = 'medium'; 
-            else if (confidence >= 1) confidenceLevel = 'low';
-            
-            const result = {
-                ...transaction,
-                analysis: {
-                    category: bestMatch?.category || 'unknown',
-                    categoryName: bestMatch?.name || '❓ Onbekend - Hulp Nodig',
-                    categoryColor: bestMatch?.color || 'bg-gray-200 text-gray-600',
-                    confidence: confidenceLevel,
-                    score: confidence,
-                    reasons: bestMatch?.reasons || ['Geen duidelijke patronen gevonden'],
-                    needsHelp: confidenceLevel === 'unknown' || confidenceLevel === 'low'
-                }
-            };
-            
-            console.log(`📊 Analysis result: ${result.analysis.categoryName} (${confidenceLevel}, score: ${confidence})`);
-            
-            return result;
-        }
-        
-        // Slimme massa-analyse van alle bankmutaties
-        function runFinancialAnalysis() {
-            console.log(`🔍 DEBUG: bankmutaties array:`, bankmutaties);
-            console.log(`🔍 DEBUG: bankmutaties length:`, bankmutaties?.length || 'undefined');
-            
-            if (!bankmutaties || bankmutaties.length === 0) {
-                console.log('❌ DEBUG: No bankmutaties available for analysis');
-                showStatus('⚠️ Geen bankmutaties beschikbaar voor analyse. Upload eerst CSV data!', 'warning');
-                return;
-            }
-            
-            console.log(`🧠 Starting financial analysis of ${bankmutaties.length} transactions...`);
-            showStatus('🧠 Financiële analyse wordt uitgevoerd...', 'info');
-            
-            // Analyseer elke transactie
-            const analyzedTransactions = bankmutaties.map(transaction => 
-                analyzeAndCategorizeTransaction(transaction)
-            );
-            
-            // Bereken statistieken
-            const stats = calculateAnalysisStats(analyzedTransactions);
-            
-            // Update UI met resultaten
-            displayAnalysisResults(analyzedTransactions, stats);
-            
-            // Toon sectie
-            document.getElementById('financial-analysis-section').style.display = 'block';
-            
-            console.log('🎯 Financial analysis completed:', stats);
-            showStatus(`✅ Analyse voltooid: ${stats.categorized} gecategoriseerd, ${stats.needsHelp} hebben hulp nodig`, 'success');
-        }
-        
-        // Bereken analyse statistieken
-        function calculateAnalysisStats(analyzedTransactions) {
-            const stats = {
-                total: analyzedTransactions.length,
-                categorized: 0,
-                needsHelp: 0,
-                highConfidence: 0,
-                mediumConfidence: 0,
-                lowConfidence: 0,
-                manualConfidence: 0,
-                smartLearnedConfidence: 0,
-                byCategory: {},
-                totalIncome: 0,
-                totalExpenses: 0
-            };
-            
-            analyzedTransactions.forEach(transaction => {
-                const analysis = transaction.analysis;
-                const amount = parseFloat(transaction.bedrag);
-                
-                // Confidence stats
-                if (analysis.confidence === 'high') stats.highConfidence++;
-                else if (analysis.confidence === 'medium') stats.mediumConfidence++;
-                else if (analysis.confidence === 'low') stats.lowConfidence++;
-                else if (analysis.confidence === 'manual') stats.manualConfidence++;
-                else if (analysis.confidence === 'smart_learned') stats.smartLearnedConfidence++;
-                
-                // Categorization stats
-                if (analysis.category !== 'unknown') {
-                    stats.categorized++;
-                    
-                    if (!stats.byCategory[analysis.category]) {
-                        stats.byCategory[analysis.category] = {
-                            name: analysis.categoryName,
-                            count: 0,
-                            totalAmount: 0,
-                            color: analysis.categoryColor
-                        };
-                    }
-                    stats.byCategory[analysis.category].count++;
-                    stats.byCategory[analysis.category].totalAmount += amount;
-                }
-                
-                if (analysis.needsHelp) {
-                    stats.needsHelp++;
-                }
-                
-                // Income vs expenses
-                if (amount > 0) {
-                    stats.totalIncome += amount;
-                } else {
-                    stats.totalExpenses += Math.abs(amount);
-                }
-            });
-            
-            return stats;
-        }
-        
-        // Toon analyse resultaten in de UI
-        function displayAnalysisResults(analyzedTransactions, stats) {
-            // Update samenvatting cijfers
-            document.getElementById('categorized-count').textContent = stats.categorized;
-            document.getElementById('needs-help-count').textContent = stats.needsHelp;
-            document.getElementById('total-income').textContent = formatCurrency(stats.totalIncome);
-            document.getElementById('total-expenses').textContent = formatCurrency(stats.totalExpenses);
-            
-            // Toon samenvattings secties
-            document.getElementById('analysis-summary').style.display = 'grid';
-            
-            // Update categorieën overzicht
-            displayCategoriesOverview(stats.byCategory);
-            
-            // Update transacties die hulp nodig hebben
-            displayNeedsHelpTransactions(analyzedTransactions.filter(t => t.analysis.needsHelp));
-            
-            // Update alle transacties tabel
-            displayAllTransactionsTable(analyzedTransactions);
-        }
-        
-        // Toon categorieën overzicht
-        function displayCategoriesOverview(byCategory) {
-            const grid = document.getElementById('categories-grid');
-            grid.innerHTML = '';
-            
-            if (Object.keys(byCategory).length === 0) {
-                document.getElementById('categories-overview').style.display = 'none';
-                return;
-            }
-            
-            document.getElementById('categories-overview').style.display = 'block';
-            
-            // Sorteer categorieën op totaal bedrag (absoluut)
-            const sortedCategories = Object.entries(byCategory)
-                .sort(([,a], [,b]) => Math.abs(b.totalAmount) - Math.abs(a.totalAmount));
-            
-            sortedCategories.forEach(([categoryKey, categoryData]) => {
-                const isExpense = categoryData.totalAmount < 0;
-                const amountColor = isExpense ? 'text-red-600' : 'text-green-600';
-                const amountPrefix = isExpense ? '-' : '+';
-                
-                const categoryCard = document.createElement('div');
-                categoryCard.className = `${categoryData.color} border rounded-lg p-4`;
-                categoryCard.innerHTML = `
-                    <div class="flex justify-between items-start mb-2">
-                        <h5 class="font-semibold text-sm">${categoryData.name}</h5>
-                        <span class="text-xs bg-white bg-opacity-50 px-2 py-1 rounded">${categoryData.count}x</span>
-                    </div>
-                    <div class="text-lg font-bold ${amountColor}">
-                        ${amountPrefix}€ ${Math.abs(categoryData.totalAmount).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
-                    </div>
-                    <div class="text-xs opacity-75 mt-1">
-                        Gemiddeld: €${Math.abs(categoryData.totalAmount / categoryData.count).toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
-                    </div>
-                `;
-                grid.appendChild(categoryCard);
-            });
-        }
-        
-        // Toon transacties die hulp nodig hebben
-        function displayNeedsHelpTransactions(needsHelpTransactions) {
-            const section = document.getElementById('needs-help-section');
-            const tbody = document.getElementById('needs-help-table');
-            
-            if (needsHelpTransactions.length === 0) {
-                section.style.display = 'none';
-                return;
-            }
-            
-            section.style.display = 'block';
-            tbody.innerHTML = '';
-            
-            needsHelpTransactions.forEach((transaction, index) => {
-                const analysis = transaction.analysis;
-                const amount = parseFloat(transaction.bedrag);
-                const amountColor = amount >= 0 ? 'text-green-600' : 'text-red-600';
-                
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-900">${formatDate(transaction.datum)}</td>
-                    <td class="px-4 py-3 text-sm font-medium ${amountColor}">${formatCurrency(amount)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
-                        <div class="truncate" title="${transaction.omschrijving}">${transaction.omschrijving}</div>
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                        <span class="${analysis.categoryColor} px-2 py-1 rounded-full text-xs">
-                            ${analysis.categoryName}
-                        </span>
-                        ${analysis.confidence !== 'unknown' ? `<div class="text-xs text-gray-500 mt-1">Vertrouwen: ${analysis.confidence}</div>` : ''}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                        <select onchange="updateTransactionCategory('${transaction.id}', this.value)" class="w-full text-xs border border-gray-300 rounded px-2 py-1">
-                            <option value="">-- Kies categorie --</option>
-                            ${Object.entries(categorizationPatterns).map(([key, data]) => 
-                                `<option value="${key}">${data.name}</option>`
-                            ).join('')}
-                            <option value="create_new">➕ Nieuwe categorie...</option>
-                        </select>
-                        <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="mt-1 text-xs text-blue-600 hover:text-blue-800">
-                            🔍 Details
-                        </button>
-                    </td>
-                `;
-            });
-        }
-        
-        // Toon alle transacties tabel
-        function displayAllTransactionsTable(analyzedTransactions) {
-            const section = document.getElementById('all-transactions-section');
-            const tbody = document.getElementById('all-transactions-table');
-            
-            section.style.display = 'block';
-            tbody.innerHTML = '';
-            
-            // Sorteer op datum (nieuwste eerst)
-            const sortedTransactions = [...analyzedTransactions].sort((a, b) => 
-                new Date(b.datum) - new Date(a.datum)
-            );
-            
-            sortedTransactions.forEach((transaction) => {
-                const analysis = transaction.analysis;
-                const amount = parseFloat(transaction.bedrag);
-                const amountColor = amount >= 0 ? 'text-green-600' : 'text-red-600';
-                
-                const confidenceBadge = {
-                    'high': '<span class="bg-green-100 text-green-800 px-2 py-1 rounded-full text-xs">Hoog ✅</span>',
-                    'medium': '<span class="bg-yellow-100 text-yellow-800 px-2 py-1 rounded-full text-xs">Medium ⚠️</span>',
-                    'low': '<span class="bg-orange-100 text-orange-800 px-2 py-1 rounded-full text-xs">Laag ❓</span>',
-                    'manual': '<span class="bg-blue-100 text-blue-800 px-2 py-1 rounded-full text-xs">Handmatig 👤</span>',
-                    'smart_learned': '<span class="bg-purple-100 text-purple-800 px-2 py-1 rounded-full text-xs">Smart Geleerd 🧠</span>',
-                    'unknown': '<span class="bg-red-100 text-red-800 px-2 py-1 rounded-full text-xs">Onbekend ❌</span>'
-                }[analysis.confidence] || '<span class="bg-gray-100 text-gray-800 px-2 py-1 rounded-full text-xs">Onbekend</span>';
-                
-                const row = tbody.insertRow();
-                row.innerHTML = `
-                    <td class="px-4 py-3 text-sm text-gray-900">${formatDate(transaction.datum)}</td>
-                    <td class="px-4 py-3 text-sm font-medium ${amountColor}">${formatCurrency(amount)}</td>
-                    <td class="px-4 py-3 text-sm text-gray-600 max-w-xs">
-                        <div class="truncate" title="${transaction.omschrijving}">${transaction.omschrijving}</div>
-                        ${transaction.tegenrekening ? `<div class="text-xs text-gray-400">${transaction.tegenrekening}</div>` : ''}
-                    </td>
-                    <td class="px-4 py-3 text-sm">
-                        <span class="${analysis.categoryColor} px-2 py-1 rounded-full text-xs">
-                            ${analysis.categoryName}
-                        </span>
-                    </td>
-                    <td class="px-4 py-3 text-sm">${confidenceBadge}</td>
-                    <td class="px-4 py-3 text-sm">
-                        <button onclick="showTransactionAnalysisDetails('${transaction.id}')" class="text-blue-600 hover:text-blue-800 text-xs">
-                            🔍 Analyse Details
-                        </button>
-                        ${analysis.needsHelp ? 
-                            `<button onclick="helpCategorizeTransaction('${transaction.id}')" class="ml-2 text-yellow-600 hover:text-yellow-800 text-xs">❓ Help Categoriseren</button>` 
-                            : ''
-                        }
-                    </td>
-                `;
-            });
-        }
-        
-        // Update transactie categorie (door user input)
-        function updateTransactionCategory(transactionId, newCategory) {
-            if (!newCategory) return;
-            
-            if (newCategory === 'create_new') {
-                const customCategory = prompt('Voer een nieuwe categorie naam in:');
-                if (customCategory) {
-                    // Hier zou je een nieuwe categorie kunnen toevoegen aan de patterns
-                    alert('Nieuwe categorieën toevoegen komt in een volgende versie!');
-                }
-                return;
-            }
-            
-            // Vind transactie en update categorie
-            const transaction = bankmutaties.find(t => t.id == transactionId);
-            if (transaction && transaction.analysis) {
-                const categoryData = categorizationPatterns[newCategory];
-                transaction.analysis.category = newCategory;
-                transaction.analysis.categoryName = categoryData.name;
-                transaction.analysis.categoryColor = categoryData.color;
-                transaction.analysis.confidence = 'manual'; // Handmatig ingesteld
-                transaction.analysis.needsHelp = false;
-                
-                console.log(`✅ Transaction manually categorized: ${transaction.omschrijving} → ${categoryData.name}`);
-                
-                // 🧠 SMART LEARNING: Zoek vergelijkbare transacties
-                const similarTransactions = findSimilarTransactions(transaction);
-                if (similarTransactions.length > 0) {
-                    showSimilarTransactionsSuggestion(transaction, similarTransactions, newCategory, categoryData);
-                }
-                
-                // Herrun analyse om stats bij te werken
-                setTimeout(() => runFinancialAnalysis(), 100);
-                
-                showStatus(`✅ Transactie gecategoriseerd als: ${categoryData.name}`, 'success');
-            }
-        }
-        
-        // 🧠 SMART LEARNING: Vind vergelijkbare transacties
-        function findSimilarTransactions(sourceTransaction) {
-            const similarTransactions = [];
-            const sourceDescription = sourceTransaction.omschrijving.toLowerCase();
-            const sourceAccount = (sourceTransaction.tegenrekening || '').toLowerCase();
-            const sourceAmount = Math.abs(parseFloat(sourceTransaction.bedrag));
-            
-            console.log(`🔍 Searching for similar transactions to: "${sourceTransaction.omschrijving}"`);
-            
-            for (const transaction of bankmutaties) {
-                // Skip de transactie zelf en al gecategoriseerde transacties
-                if (transaction.id === sourceTransaction.id || 
-                    (transaction.analysis && transaction.analysis.confidence === 'manual')) {
-                    continue;
-                }
-                
-                const description = transaction.omschrijving.toLowerCase();
-                const account = (transaction.tegenrekening || '').toLowerCase();
-                const amount = Math.abs(parseFloat(transaction.bedrag));
-                
-                let similarityScore = 0;
-                const reasons = [];
-                
-                // 1. Exacte tegenrekening match (zeer hoge score)
-                if (sourceAccount && account && sourceAccount === account) {
-                    similarityScore += 10;
-                    reasons.push(`Zelfde tegenrekening: ${account}`);
-                }
-                
-                // 2. Vergelijkbare omschrijving (Levenshtein distance)
-                const descriptionSimilarity = calculateStringSimilarity(sourceDescription, description);
-                if (descriptionSimilarity > 0.6) {
-                    similarityScore += 8 * descriptionSimilarity;
-                    reasons.push(`Vergelijkbare omschrijving (${Math.round(descriptionSimilarity * 100)}% match)`);
-                }
-                
-                // 3. Gedeelde woorden in omschrijving
-                const sourceWords = sourceDescription.split(/\s+/).filter(word => word.length > 3);
-                const words = description.split(/\s+/).filter(word => word.length > 3);
-                const sharedWords = sourceWords.filter(word => words.includes(word));
-                if (sharedWords.length > 0) {
-                    similarityScore += sharedWords.length * 2;
-                    reasons.push(`Gedeelde woorden: ${sharedWords.join(', ')}`);
-                }
-                
-                // 4. Vergelijkbaar bedrag (binnen 10% marge)
-                const amountDifference = Math.abs(sourceAmount - amount) / Math.max(sourceAmount, amount);
-                if (amountDifference <= 0.1) {
-                    similarityScore += 5;
-                    reasons.push(`Vergelijkbaar bedrag (${Math.round((1 - amountDifference) * 100)}% match)`);
-                } else if (amountDifference <= 0.25) {
-                    similarityScore += 2;
-                    reasons.push(`Redelijk vergelijkbaar bedrag`);
-                }
-                
-                // 5. Zelfde bedrag (exacte match)
-                if (sourceAmount === amount) {
-                    similarityScore += 3;
-                    reasons.push(`Exact hetzelfde bedrag`);
-                }
-                
-                // Voeg toe als voldoende gelijkenis (threshold = 5)
-                if (similarityScore >= 5) {
-                    similarTransactions.push({
-                        transaction,
-                        similarityScore,
-                        reasons
-                    });
-                }
-            }
-            
-            // Sorteer op gelijkenis score (hoogste eerst)
-            similarTransactions.sort((a, b) => b.similarityScore - a.similarityScore);
-            
-            console.log(`🎯 Found ${similarTransactions.length} similar transactions`);
-            return similarTransactions;
-        }
-        
-        // 🧠 SMART LEARNING: Bereken string gelijkenis (Levenshtein gebaseerd)
-        function calculateStringSimilarity(str1, str2) {
-            if (str1 === str2) return 1;
-            if (str1.length === 0 || str2.length === 0) return 0;
-            
-            const distance = levenshteinDistance(str1, str2);
-            const maxLength = Math.max(str1.length, str2.length);
-            
-            return 1 - (distance / maxLength);
-        }
-        
-        // 🧠 SMART LEARNING: Toon suggestie dialog voor vergelijkbare transacties
-        function showSimilarTransactionsSuggestion(sourceTransaction, similarTransactions, categoryKey, categoryData) {
-            if (similarTransactions.length === 0) return;
-            
-            // Bouw het bericht
-            let message = `🧠 SMART LEREN GEDETECTEERD\n\n`;
-            message += `Je hebt zojuist deze transactie gecategoriseerd:\n`;
-            message += `💰 ${formatCurrency(sourceTransaction.bedrag)}\n`;
-            message += `📝 "${sourceTransaction.omschrijving}"\n`;
-            message += `📂 Categorie: ${categoryData.name}\n\n`;
-            
-            message += `🔍 De app heeft ${similarTransactions.length} vergelijkbare transactie${similarTransactions.length > 1 ? 's' : ''} gevonden:\n\n`;
-            
-            // Toon top 5 meest vergelijkbare transacties
-            const topSimilar = similarTransactions.slice(0, 5);
-            topSimilar.forEach((similar, index) => {
-                const t = similar.transaction;
-                message += `${index + 1}. ${formatCurrency(t.bedrag)} - "${t.omschrijving}"\n`;
-                message += `   📊 Gelijkenis: ${Math.round(similar.similarityScore)} punten\n`;
-                if (similar.reasons.length > 0) {
-                    message += `   🔍 Redenen: ${similar.reasons.slice(0, 2).join(', ')}\n`;
-                }
-                message += `\n`;
-            });
-            
-            if (similarTransactions.length > 5) {
-                message += `... en ${similarTransactions.length - 5} andere vergelijkbare transacties.\n\n`;
-            }
-            
-            message += `❓ Wil je alle ${similarTransactions.length} vergelijkbare transacties ook categoriseren als "${categoryData.name}"?`;
-            
-            // Toon bevestigingsvenster
-            const confirmed = confirm(message);
-            if (confirmed) {
-                applyCategoryToSimilarTransactions(similarTransactions, categoryKey, categoryData);
-            }
-        }
-        
-        // 🧠 SMART LEARNING: Pas categorie toe op vergelijkbare transacties
-        function applyCategoryToSimilarTransactions(similarTransactions, categoryKey, categoryData) {
-            let categorizedCount = 0;
-            
-            similarTransactions.forEach(similar => {
-                const transaction = similar.transaction;
-                if (transaction.analysis) {
-                    transaction.analysis.category = categoryKey;
-                    transaction.analysis.categoryName = categoryData.name;
-                    transaction.analysis.categoryColor = categoryData.color;
-                    transaction.analysis.confidence = 'smart_learned'; // Slim geleerd
-                    transaction.analysis.needsHelp = false;
-                    transaction.analysis.reasons = [
-                        `Smart geleerd van vergelijkbare transactie`,
-                        ...similar.reasons.slice(0, 2)
-                    ];
-                    categorizedCount++;
-                }
-            });
-            
-            console.log(`🧠 Smart learning applied: ${categorizedCount} transactions categorized as ${categoryData.name}`);
-            
-            // Update UI
-            setTimeout(() => {
-                runFinancialAnalysis();
-                updateDataTables();
-            }, 100);
-            
-            showStatus(`🧠 Smart leren: ${categorizedCount} vergelijkbare transacties automatisch gecategoriseerd als "${categoryData.name}"`, 'success');
-        }
-        
-        // Toon analyse details van een transactie
-        function showTransactionAnalysisDetails(transactionId) {
-            const transaction = bankmutaties.find(t => t.id == transactionId);
-            if (!transaction || !transaction.analysis) return;
-            
-            const analysis = transaction.analysis;
-            let details = `🔍 ANALYSE DETAILS\n\n`;
-            details += `💰 Transactie: ${formatCurrency(transaction.bedrag)}\n`;
-            details += `📅 Datum: ${formatDate(transaction.datum)}\n`;
-            details += `📝 Omschrijving: ${transaction.omschrijving}\n`;
-            details += `🏦 Tegenrekening: ${transaction.tegenrekening || 'Niet beschikbaar'}\n\n`;
-            details += `🎯 CATEGORIE ANALYSE:\n`;
-            details += `📂 Categorie: ${analysis.categoryName}\n`;
-            details += `🎚️ Vertrouwen: ${analysis.confidence}\n`;
-            details += `📊 Score: ${analysis.score}\n\n`;
-            details += `🔍 REDENEN:\n`;
-            analysis.reasons.forEach((reason, i) => {
-                details += `${i + 1}. ${reason}\n`;
-            });
-            
-            alert(details);
-        }
-        
-        // Debug functie om bankmutaties status te controleren
-        function debugBankmutaties() {
-            console.log('🔍 === BANKMUTATIES DEBUG ===');
-            console.log('bankmutaties variable exists:', typeof bankmutaties !== 'undefined');
-            console.log('bankmutaties is array:', Array.isArray(bankmutaties));
-            console.log('bankmutaties length:', bankmutaties?.length || 'undefined');
-            console.log('bankmutaties content:', bankmutaties);
-            
-            // Check localStorage
-            const storedData = localStorage.getItem('cashflowData');
-            if (storedData) {
-                try {
-                    const parsed = JSON.parse(storedData);
-                    console.log('localStorage bankmutaties length:', parsed.data?.bankmutaties?.length || 'undefined');
-                    console.log('localStorage bankmutaties:', parsed.data?.bankmutaties);
-                } catch (e) {
-                    console.log('Error parsing localStorage:', e);
-                }
-            } else {
-                console.log('No data in localStorage');
-            }
-            
-            // Show in alert too
-            alert(`DEBUG INFO:\n\nbankmutaties exists: ${typeof bankmutaties !== 'undefined'}\nbankmutaties length: ${bankmutaties?.length || 'undefined'}\nbankmutaties is array: ${Array.isArray(bankmutaties)}\n\nCheck console for detailed info.`);
-        }
-
-        // Helper functie om te helpen bij categorisatie
-        function helpCategorizeTransaction(transactionId) {
-            const transaction = bankmutaties.find(t => t.id == transactionId);
-            if (!transaction) return;
-            
-            const customPrompt = `🤔 HULP NODIG BIJ CATEGORISATIE\n\n` +
-                `💰 Bedrag: ${formatCurrency(transaction.bedrag)}\n` +
-                `📝 Omschrijving: ${transaction.omschrijving}\n` +
-                `🏦 Tegenrekening: ${transaction.tegenrekening || 'Onbekend'}\n\n` +
-                `Welke categorie past het beste?\n\n` +
-                Object.entries(categorizationPatterns).map(([key, data], i) => 
-                    `${i + 1}. ${data.name}`
-                ).join('\n') +
-                `\n\nVoer het nummer in (1-${Object.keys(categorizationPatterns).length}):`;
-            
-            const choice = prompt(customPrompt);
-            if (choice) {
-                const categoryKeys = Object.keys(categorizationPatterns);
-                const selectedKey = categoryKeys[parseInt(choice) - 1];
-                if (selectedKey) {
-                    updateTransactionCategory(transactionId, selectedKey);
-                }
-            }
-        }
-        
         // Update reconciliatie display
         function updateReconciliationDisplay(results) {
             // Update samenvatting cijfers
@@ -4802,7 +4356,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             showStatus(`✅ Nieuwe vaste uitgave toegevoegd: ${crediteur} - ${formatCurrency(amount)}`, 'success');
             
             // Herrun reconciliation om de nieuwe match te vinden
-            runBankReconciliation();
+            performBankReconciliation();
             
             // Update data beheer tabellen
             updateDataTables();
@@ -4837,7 +4391,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             showStatus(`✅ Nieuwe variabele uitgave toegevoegd: ${description.substring(0, 30)} - ${formatCurrency(amount)}`, 'success');
             
             // Herrun reconciliation om de nieuwe match te vinden
-            runBankReconciliation();
+            performBankReconciliation();
             
             // Update data beheer tabellen
             updateDataTables();
@@ -4852,7 +4406,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             showStatus(`🙅 Suggestie genegeerd voor: ${description.substring(0, 30)}...`, 'info');
             
             // Herrun reconciliation om de suggestie te verwijderen uit de lijst
-            runBankReconciliation();
+            performBankReconciliation();
         }
         
         // Selecteer een specifieke match uit de opties
@@ -5212,12 +4766,6 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         // Export functies naar window object
         window.processBankmutaties = processBankmutaties;
         window.runBankReconciliation = runBankReconciliation;
-        window.runFinancialAnalysis = runFinancialAnalysis;
-        window.analyzeAndCategorizeTransaction = analyzeAndCategorizeTransaction;
-        window.updateTransactionCategory = updateTransactionCategory;
-        window.showTransactionAnalysisDetails = showTransactionAnalysisDetails;
-        window.helpCategorizeTransaction = helpCategorizeTransaction;
-        window.debugBankmutaties = debugBankmutaties;
         window.deleteAllBankmutaties = deleteAllBankmutaties;
         window.toggleMatchedDetails = toggleMatchedDetails;
         window.manualMatch = manualMatch;
@@ -5243,6 +4791,8 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         customVerzekeraars: customVerzekeraars,
                         particulierFacturen: particulierFacturen,
                         creditFacturen: creditFacturen,
+                        creditDeclaraties: creditDeclaraties,
+                        correctieFacturen: correctieFacturen,
                         variabeleUitgaven: variabeleUitgaven,
                         bankmutaties: bankmutaties,
                         huidigBanksaldo: huidigBanksaldo,
@@ -5282,6 +4832,8 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 customVerzekeraars = parsed.data.customVerzekeraars || [];
                 particulierFacturen = parsed.data.particulierFacturen || [];
                 creditFacturen = parsed.data.creditFacturen || [];
+                creditDeclaraties = parsed.data.creditDeclaraties || [];
+                correctieFacturen = parsed.data.correctieFacturen || [];
                 variabeleUitgaven = parsed.data.variabeleUitgaven || [];
                 bankmutaties = parsed.data.bankmutaties || [];
                 
@@ -5295,22 +4847,13 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 
                 if (parsed.data.prognosePeriode !== undefined) {
                     prognosePeriode = parsed.data.prognosePeriode;
-                    const periodeInput = document.getElementById('prognose-periode-input');
-                    if (periodeInput) {
-                        periodeInput.value = prognosePeriode;
-                    }
-                    const periodeDisplay = document.getElementById('prognose-periode-display');
-                    if (periodeDisplay) {
-                        periodeDisplay.textContent = prognosePeriode;
-                    }
+                    document.getElementById('prognose-periode-input').value = prognosePeriode;
+                    document.getElementById('prognose-periode-display').textContent = prognosePeriode;
                 }
                 
                 if (parsed.data.prognoseStartDatum) {
                     prognoseStartDatum = new Date(parsed.data.prognoseStartDatum);
-                    const startdatumInput = document.getElementById('prognose-startdatum-input');
-                    if (startdatumInput) {
-                        startdatumInput.value = prognoseStartDatum.toISOString().split('T')[0];
-                    }
+                    document.getElementById('prognose-startdatum-input').value = prognoseStartDatum.toISOString().split('T')[0];
                 }
                 
                 console.log(`📂 Data geladen uit localStorage - ${parsed.timestamp}`);
