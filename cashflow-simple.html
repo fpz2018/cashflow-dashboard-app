@@ -1153,13 +1153,18 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                             console.log('🏥 Exacte verzekeraar uit data:', `"${verzekeraar}"`);
                             
                             if (datum && verzekeraar && bedrag && factuurnummer) {
+                                // Converteer datum naar ISO format voor consistentie
+                                const isoDate = convertDutchDateToISO(datum);
+                                
                                 // Bepaal betaaltermijn per verzekeraar
                                 const betaaltermijn = getBetaaltermijn(verzekeraar);
-                                const verwachteBetaaldatum = new Date(datum);
+                                const verwachteBetaaldatum = new Date(isoDate);
                                 verwachteBetaaldatum.setDate(verwachteBetaaldatum.getDate() + betaaltermijn);
                                 
+                                console.log(`🏥 Declaratie date conversion: "${datum}" -> "${isoDate}"`);
+                                
                                 parsed.push({
-                                    datum,
+                                    datum: isoDate,
                                     verzekeraar,
                                     bedrag,
                                     factuurnummer,
@@ -2131,11 +2136,15 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             const appliedCredits = [];
             const appliedCorrections = [];
             
-            console.log(`🔍 Checking credits for declaratie ${declaratie.factuurnummer}:`);
+            console.log(`🔍 Checking credits for declaratie ${declaratie.factuurnummer} (datum: ${declaratie.datum}):`);
             console.log(`   Available creditDeclaraties: ${creditDeclaraties?.length || 0}`);
             console.log(`   Available correctieFacturen: ${correctieFacturen?.length || 0}`);
-            console.log(`   CreditDeclaraties:`, creditDeclaraties);
-            console.log(`   CorrectieFacturen:`, correctieFacturen);
+            if (creditDeclaraties?.length > 0) {
+                console.log(`   Sample creditDeclaratie:`, creditDeclaraties[0]);
+            }
+            if (correctieFacturen?.length > 0) {
+                console.log(`   Sample correctieFactuur:`, correctieFacturen[0]);
+            }
             
             // Zoek matching credit declaraties op factuurnummer/factuur
             creditDeclaraties?.forEach(credit => {
@@ -2276,9 +2285,11 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             let totalCredits = 0;
             const appliedCredits = [];
             
-            console.log(`🔍 Checking credits for particulier factuur ${factuur.factuur}:`);
+            console.log(`🔍 Checking credits for particulier factuur ${factuur.factuur} (datum: ${factuur.datum}):`);
             console.log(`   Available creditFacturen: ${creditFacturen?.length || 0}`);
-            console.log(`   CreditFacturen:`, creditFacturen);
+            if (creditFacturen?.length > 0) {
+                console.log(`   Sample creditFactuur:`, creditFacturen[0]);
+            }
             
             // Zoek matching credit facturen op factuurnummer (ALLEEN credit facturen voor particulieren!)
             creditFacturen?.forEach(credit => {
