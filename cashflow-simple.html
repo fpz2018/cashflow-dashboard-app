@@ -1125,6 +1125,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Tegenrekening</th>
+                                    <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Match Status</th>
                                     <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
                                 </tr>
@@ -1795,10 +1796,63 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 { naam: 'Achmea', termijn: 30 }
             ];
 
-            showStatus('✅ Demo data succesvol geladen!', 'success');
+            // Demo bankmutaties voor het testen van categorisatie
+            bankmutaties = [
+                {
+                    datum: '2025-01-10',
+                    bedrag: 155.27,
+                    omschrijving: 'BETALINGSVERZOEK a.s.r. ZORG',
+                    tegenrekening: 'NL91ABNA0417164300',
+                    id: Date.now() + Math.random(),
+                    matchStatus: 'unmatched',
+                    matchDetails: null
+                },
+                {
+                    datum: '2025-01-12', 
+                    bedrag: -850.00,
+                    omschrijving: 'HUUR PRAKTIJKRUIMTE MAAND JANUARI',
+                    tegenrekening: 'NL44RABO0123456789',
+                    id: Date.now() + Math.random() + 1,
+                    matchStatus: 'unmatched',
+                    matchDetails: null
+                },
+                {
+                    datum: '2025-01-15',
+                    bedrag: 89.50,
+                    omschrijving: 'Particulier betaling consultatiekosten',
+                    tegenrekening: 'NL12INGB0001234567',
+                    id: Date.now() + Math.random() + 2,
+                    matchStatus: 'unmatched', 
+                    matchDetails: null
+                },
+                {
+                    datum: '2025-01-20',
+                    bedrag: -125.00,
+                    omschrijving: 'SUPERMARKT AH BOODSCHAPPEN',
+                    tegenrekening: 'NL34ABNA0987654321',
+                    id: Date.now() + Math.random() + 3,
+                    matchStatus: 'unmatched',
+                    matchDetails: null
+                }
+            ];
+
+            showStatus('✅ Demo data succesvol geladen (inclusief test bankmutaties)!', 'success');
             updatePrognose();
             updateDataTables();
             checkVerzekeraarsMatching();
+            
+            // Run financial analysis to show categorization buttons
+            setTimeout(() => {
+                console.log('🧠 Running financial analysis for demo data...');
+                runFinancialAnalysis();
+                
+                // Also ensure bankmutaties table is updated
+                setTimeout(() => {
+                    if (typeof filterBankmutaties === 'function') {
+                        filterBankmutaties();
+                    }
+                }, 500);
+            }, 1000);
         }
 
         // Helper functions
@@ -4801,15 +4855,34 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             
             // Vind transactie en update categorie
             const transaction = bankmutaties.find(t => t.id == transactionId);
-            if (transaction && transaction.analysis) {
+            if (transaction) {
                 const categoryData = categorizationPatterns[newCategory];
+                
+                // Zorg ervoor dat analysis object bestaat
+                if (!transaction.analysis) {
+                    transaction.analysis = {};
+                }
+                
+                // Update analysis eigenschappen
                 transaction.analysis.category = newCategory;
                 transaction.analysis.categoryName = categoryData.name;
                 transaction.analysis.categoryColor = categoryData.color;
                 transaction.analysis.confidence = 'manual'; // Handmatig ingesteld
                 transaction.analysis.needsHelp = false;
                 
+                // Update ook direct op transaction niveau voor gebruik in tabellen
+                transaction.category = newCategory;
+                transaction.categoryName = categoryData.name;
+                transaction.categoryColor = categoryData.color;
+                
                 console.log(`✅ Transaction manually categorized: ${transaction.omschrijving} → ${categoryData.name}`);
+                
+                // Sla data op naar localStorage
+                saveDataToStorage();
+                
+                // Update alle tabellen om de nieuwe categorie te tonen
+                filterBankmutaties(); // Update bankmutaties tabel
+                updateDataTables(); // Update andere tabellen
                 
                 // 🧠 SMART LEARNING: Zoek vergelijkbare transacties
                 const similarTransactions = findSimilarTransactions(transaction);
@@ -4820,7 +4893,7 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                 // Herrun analyse om stats bij te werken
                 setTimeout(() => runFinancialAnalysis(), 100);
                 
-                showStatus(`✅ Transactie gecategoriseerd als: ${categoryData.name}`, 'success');
+                showStatus(`✅ Transactie gecategoriseerd als: ${categoryData.name}! Refresh tabellen om wijzigingen te zien.`, 'success');
             }
         }
         
@@ -5042,9 +5115,12 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
             
             const transaction = bankmutaties.find(t => t.id == transactionId);
             if (!transaction) {
-                showStatus('❌ Transactie niet gevonden', 'error');
+                showStatus(`❌ Transactie niet gevonden voor ID: ${transactionId}`, 'error');
+                console.error('Available transaction IDs:', bankmutaties.map(t => t.id));
                 return;
             }
+            
+            console.log('✅ Found transaction:', transaction.omschrijving);
             
             // Remove any existing category dropdown
             closeCategoryDropdown();
@@ -5132,11 +5208,28 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         
         // Select category for transaction
         function selectTransactionCategory(transactionId, categoryKey) {
+            console.log(`🎯 Selecting category: ${categoryKey} for transaction: ${transactionId}`);
             closeCategoryDropdown();
+            
+            // Get category data for better feedback
+            const categoryData = categorizationPatterns[categoryKey];
+            const categoryName = categoryData ? categoryData.name : categoryKey;
+            
             updateTransactionCategory(transactionId, categoryKey);
             
-            // Show quick feedback
-            showStatus(`✅ Categorie toegepast! Smart learning zoekt naar vergelijkbare transacties...`, 'success');
+            // Show immediate feedback
+            showStatus(`✅ Categorie "${categoryName}" toegepast! Tabellen worden bijgewerkt...`, 'success');
+            
+            // Force refresh van de pagina secties na een korte delay
+            setTimeout(() => {
+                // Force refresh van alle relevante secties
+                if (typeof filterBankmutaties === 'function') {
+                    filterBankmutaties();
+                }
+                if (typeof renderTransactionsTable === 'function') {
+                    renderTransactionsTable();
+                }
+            }, 500);
         }
         
         // Create custom category
@@ -5812,7 +5905,21 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
         window.updateTransactionCategory = updateTransactionCategory;
         window.showTransactionAnalysisDetails = showTransactionAnalysisDetails;
         window.helpCategorizeTransaction = helpCategorizeTransaction;
+        window.closeCategoryDropdown = closeCategoryDropdown;
+        window.filterCategories = filterCategories;
+        window.selectTransactionCategory = selectTransactionCategory;
+        window.createCustomCategory = createCustomCategory;
         window.debugBankmutaties = debugBankmutaties;
+        window.testCategorization = function() {
+            console.log('🧪 Testing categorization...');
+            if (bankmutaties && bankmutaties.length > 0) {
+                const firstTransaction = bankmutaties[0];
+                console.log('Testing with first transaction:', firstTransaction);
+                helpCategorizeTransaction(firstTransaction.id);
+            } else {
+                console.log('No bankmutaties available for testing');
+            }
+        };
         window.deleteAllBankmutaties = deleteAllBankmutaties;
         window.toggleMatchedDetails = toggleMatchedDetails;
         window.manualMatch = manualMatch;
@@ -6488,6 +6595,12 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                         <div class="truncate" title="${transaction.tegenrekening || 'Niet beschikbaar'}">${transaction.tegenrekening || 'N/A'}</div>
                     </td>
                     <td class="px-4 py-3 text-sm">
+                        ${transaction.category ? 
+                            `<span class="px-2 py-1 rounded-full text-xs ${transaction.categoryColor || 'bg-blue-100 text-blue-800'}">${transaction.categoryName || transaction.category}</span>` : 
+                            `<span class="px-2 py-1 rounded-full text-xs bg-gray-100 text-gray-600">❓ Onbekend</span>`
+                        }
+                    </td>
+                    <td class="px-4 py-3 text-sm">
                         <span class="px-2 py-1 rounded-full text-xs ${matchStatusClass}">
                             ${matchStatus}
                         </span>
@@ -6504,6 +6617,9 @@ CF202500009602	26-9-2025	Klaas de Vries	€ 125,00" class="w-full h-32 px-3 py-2
                                     ⚠️ Review
                                 </button>` : ''
                             }
+                            <button onclick="helpCategorizeTransaction('${transaction.id}')" class="px-2 py-1 bg-blue-100 hover:bg-blue-200 text-blue-800 rounded text-xs transition-colors">
+                                📂 Categoriseer
+                            </button>
                         </div>
                     </td>
                 `;
