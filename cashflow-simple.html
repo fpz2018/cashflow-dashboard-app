@@ -628,6 +628,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     <button onclick="setBeheerTab('correctie-facturen')" id="beheer-tab-correctie-facturen" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🔧 Correcties (<span id="correctie-facturen-count">0</span>)
                     </button>
+                    <button onclick="setBeheerTab('variabele-uitgaven')" id="beheer-tab-variabele-uitgaven" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
+                        📋 Variabele Uitgaven (<span id="variabele-uitgaven-count">0</span>)
+                    </button>
                     <button onclick="setBeheerTab('bankmutaties')" id="beheer-tab-bankmutaties" class="border-transparent text-gray-500 hover:text-gray-700 hover:border-gray-300 whitespace-nowrap py-2 px-1 border-b-2 font-medium text-sm">
                         🏦 Bankmutaties (<span id="bankmutaties-count">0</span>)
                     </button>
@@ -874,6 +877,43 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 </div>
             </div>
 
+            <!-- Variabele Uitgaven Beheer -->
+            <div id="beheer-variabele-uitgaven" class="beheer-section hidden">
+                <div class="flex justify-between items-center mb-4">
+                    <h4 class="text-lg font-semibold text-gray-900">
+                        Variabele Uitgaven (Eenmalige Kosten)
+                    </h4>
+                    <div class="flex gap-2">
+                        <button onclick="showAddVariabeleUitgaveModal()" class="px-4 py-2 bg-green-500 text-white rounded-md hover:bg-green-600 transition-colors text-sm">
+                            ➕ Nieuwe Uitgave
+                        </button>
+                        <button onclick="deleteAllVariabeleUitgaven()" class="px-4 py-2 bg-red-500 text-white rounded-md hover:bg-red-600 transition-colors text-sm">
+                            🗑️ Alles Verwijderen
+                        </button>
+                    </div>
+                </div>
+                
+                <div class="overflow-x-auto">
+                    <table class="min-w-full divide-y divide-gray-200">
+                        <thead class="bg-gray-50">
+                            <tr>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Omschrijving</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Categorie</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
+                            </tr>
+                        </thead>
+                        <tbody id="variabele-uitgaven-table-body" class="bg-white divide-y divide-gray-200">
+                            <!-- Wordt gevuld door JavaScript -->
+                        </tbody>
+                    </table>
+                    <div id="no-variabele-uitgaven" class="text-center py-8 text-gray-500" style="display: none;">
+                        Geen variabele uitgaven toegevoegd
+                    </div>
+                </div>
+            </div>
+
             <!-- Bankmutaties Beheer -->
             <div id="beheer-bankmutaties" class="beheer-section hidden">
                 <div class="flex justify-between items-center mb-4">
@@ -963,6 +1003,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
         let creditFacturen = []; // Voor particulieren: factuur, datum, debiteur, bedrag
         let creditDeclaraties = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
         let correctieFacturen = []; // Voor verzekeraars: factuur, datum, verzekeraar, factuur origineel, bedrag
+        
+        // Variabele uitgaven data
+        let variabeleUitgaven = []; // Eenmalige uitgaven: datum, omschrijving, bedrag, categorie
         
         // Bank reconciliatie data
         let bankmutaties = []; // Voor banktransacties: datum, bedrag, omschrijving, tegenrekening
@@ -2063,6 +2106,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             updateCreditFacturenTable();
             updateCreditDeclaratiesTable();
             updateCorrectieFacturenTable();
+            updateVariabeleUitgavenTable();
             updateBankmutatiësTable();
             updateCounts();
         }
@@ -2076,6 +2120,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             document.getElementById('credit-facturen-count').textContent = creditFacturen.length;
             document.getElementById('credit-declaraties-count').textContent = creditDeclaraties.length;
             document.getElementById('correctie-facturen-count').textContent = correctieFacturen.length;
+            document.getElementById('variabele-uitgaven-count').textContent = variabeleUitgaven.length;
         }
 
         // Bereken netto bedrag voor een declaratie (origineel - credits - correcties)
@@ -2097,7 +2142,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 const creditFactuur = credit.factuurnummer || credit.factuur;
                 if (creditFactuur && declaratie.factuurnummer && 
                     creditFactuur === declaratie.factuurnummer) {
-                    console.log(`   ✅ Found credit match: ${creditFactuur} = ${declaratie.factuurnummer}`);
+                    console.log(`   ✅ Found credit declaratie match: ${creditFactuur} = ${declaratie.factuurnummer}`);
                     const creditAmount = Math.abs(parseFloat(credit.bedrag));
                     totalCredits += creditAmount;
                     appliedCredits.push({
@@ -2235,12 +2280,12 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             console.log(`   Available creditFacturen: ${creditFacturen?.length || 0}`);
             console.log(`   CreditFacturen:`, creditFacturen);
             
-            // Zoek matching credit facturen op factuurnummer
+            // Zoek matching credit facturen op factuurnummer (ALLEEN credit facturen voor particulieren!)
             creditFacturen?.forEach(credit => {
                 const creditFactuur = credit.factuurnummer || credit.factuur;
                 if (creditFactuur && factuur.factuur && 
                     creditFactuur === factuur.factuur) {
-                    console.log(`   ✅ Found credit match: ${creditFactuur} = ${factuur.factuur}`);
+                    console.log(`   ✅ Found credit factuur match: ${creditFactuur} = ${factuur.factuur}`);
                     const creditAmount = Math.abs(parseFloat(credit.bedrag));
                     totalCredits += creditAmount;
                     appliedCredits.push({
@@ -3119,6 +3164,80 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             }
         }
 
+        // === VARIABELE UITGAVEN FUNCTIES ===
+
+        // Update variabele uitgaven table
+        function updateVariabeleUitgavenTable() {
+            const tbody = document.getElementById('variabele-uitgaven-table-body');
+            const noData = document.getElementById('no-variabele-uitgaven');
+            
+            tbody.innerHTML = '';
+            
+            if (variabeleUitgaven.length === 0) {
+                noData.style.display = 'block';
+                return;
+            }
+            
+            noData.style.display = 'none';
+            
+            // Sorteer op datum (nieuwste eerst)
+            const gesorteerd = [...variabeleUitgaven].sort((a, b) => new Date(b.datum) - new Date(a.datum));
+            
+            gesorteerd.forEach((uitgave, index) => {
+                const originalIndex = variabeleUitgaven.findIndex(v => v.id === uitgave.id);
+                const row = tbody.insertRow();
+                row.innerHTML = `
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(uitgave.datum).toLocaleDateString('nl-NL')}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900 max-w-xs truncate" title="${uitgave.omschrijving}">${uitgave.omschrijving}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-red-600">
+                        -€ ${uitgave.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-600">${uitgave.categorie}</td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-500">
+                        <button onclick="editVariabeleUitgave(${originalIndex})" class="text-blue-600 hover:text-blue-900 mr-3">
+                            ✏️ Bewerken
+                        </button>
+                        <button onclick="deleteVariabeleUitgave(${originalIndex})" class="text-red-600 hover:text-red-900">
+                            🗑️ Verwijderen
+                        </button>
+                    </td>
+                `;
+            });
+        }
+
+        // Delete alle variabele uitgaven
+        function deleteAllVariabeleUitgaven() {
+            if (confirm(`Weet je zeker dat je alle ${variabeleUitgaven.length} variabele uitgaven wilt verwijderen?`)) {
+                variabeleUitgaven = [];
+                updateDataTables();
+                updatePrognose();
+                saveDataToStorage();
+                showStatus('✅ Alle variabele uitgaven verwijderd!', 'success');
+            }
+        }
+
+        // Delete specifieke variabele uitgave
+        function deleteVariabeleUitgave(index) {
+            const uitgave = variabeleUitgaven[index];
+            if (confirm(`Weet je zeker dat je deze variabele uitgave wilt verwijderen?\n\n${uitgave.omschrijving} - €${uitgave.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}`)) {
+                variabeleUitgaven.splice(index, 1);
+                updateDataTables();
+                updatePrognose();
+                saveDataToStorage();
+                showStatus('✅ Variabele uitgave verwijderd!', 'success');
+            }
+        }
+
+        // Edit variabele uitgave (placeholder)
+        function editVariabeleUitgave(index) {
+            alert('Edit functionaliteit komt binnenkort beschikbaar!');
+        }
+
+        // Show modal voor nieuwe variabele uitgave (placeholder)
+        function showAddVariabeleUitgaveModal() {
+            alert('Handmatige toevoeging komt binnenkort beschikbaar! Voor nu kun je variabele uitgaven toevoegen via de bank reconciliatie suggesties.');
+        }
+
         // === EDIT FUNCTIES VOOR PARTICULIER FACTUREN ===
 
         function editParticulierFactuur(index) {
@@ -3905,7 +4024,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     }
                 });
                 
-                // Als geen bekende vaste kost gevonden, suggest nieuwe uitgave
+                // Als geen bekende vaste kost gevonden, suggest nieuwe uitgave (vaste of variabele)
                 if (exactMatches.length === 0 && fuzzyMatches.length === 0) {
                     suggestions.push({
                         type: 'nieuwe_vaste_uitgave',
@@ -3914,7 +4033,14 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                         datum: bankmutatie.datum,
                         reason: 'Geen bekende vaste kost gevonden - suggestie nieuwe vaste uitgave'
                     });
-                    console.log(`💡 Suggest nieuwe vaste uitgave: ${formatCurrency(bankBedrag)} voor "${bankmutatie.omschrijving}"`);
+                    suggestions.push({
+                        type: 'nieuwe_variabele_uitgave',
+                        amount: bankBedrag,
+                        description: bankmutatie.omschrijving,
+                        datum: bankmutatie.datum,
+                        reason: 'Geen bekende vaste kost gevonden - suggestie eenmalige variabele uitgave'
+                    });
+                    console.log(`💡 Suggest nieuwe uitgave opties: Vaste (€${formatCurrency(bankBedrag)}) of Variabele (€${formatCurrency(bankBedrag)}) voor "${bankmutatie.omschrijving}"`);
                 }
             }
             
@@ -4045,35 +4171,66 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             `).join('');
         }
         
-        // Update suggesties tabel
+        // Update suggesties tabel (groepeer per banktransactie)
         function updateSuggestionsTable(suggestions) {
             const tbody = document.getElementById('suggestions-body');
-            tbody.innerHTML = suggestions.map(suggestion => `
-                <tr>
-                    <td class="px-4 py-2 text-sm text-gray-900">${formatDate(suggestion.datum)}</td>
-                    <td class="px-4 py-2 text-sm text-red-600">-${formatCurrency(suggestion.amount)}</td>
-                    <td class="px-4 py-2 text-sm text-gray-600 max-w-xs truncate" title="${suggestion.description}">${suggestion.description}</td>
-                    <td class="px-4 py-2 text-sm text-purple-600">${suggestion.reason}</td>
-                    <td class="px-4 py-2 text-sm">
-                        <div class="flex space-x-2">
-                            <button 
-                                onclick="acceptSuggestion('${suggestion.datum}', ${suggestion.amount}, '${suggestion.description.replace(/'/g, "\\'")}')"
-                                class="px-3 py-1 bg-purple-500 text-white text-xs rounded hover:bg-purple-600 transition-colors"
-                                title="Toevoegen als nieuwe vaste uitgave"
-                            >
-                                ✓ Toevoegen
-                            </button>
-                            <button 
-                                onclick="ignoreSuggestion('${suggestion.datum}', '${suggestion.description.replace(/'/g, "\\'")}')"
-                                class="px-3 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500 transition-colors"
-                                title="Negeren (niet opslaan)"
-                            >
-                                ✖ Negeren
-                            </button>
-                        </div>
-                    </td>
-                </tr>
-            `).join('');
+            
+            // Groepeer suggesties per banktransactie beschrijving + datum
+            const groupedSuggestions = {};
+            suggestions.forEach(suggestion => {
+                const key = `${suggestion.datum}_${suggestion.description}`;
+                if (!groupedSuggestions[key]) {
+                    groupedSuggestions[key] = [];
+                }
+                groupedSuggestions[key].push(suggestion);
+            });
+            
+            let html = '';
+            Object.values(groupedSuggestions).forEach(group => {
+                const firstSuggestion = group[0];
+                const hasVasteUitgave = group.some(s => s.type === 'nieuwe_vaste_uitgave');
+                const hasVariabeleUitgave = group.some(s => s.type === 'nieuwe_variabele_uitgave');
+                
+                html += `
+                    <tr class="border-b border-purple-100">
+                        <td class="px-4 py-2 text-sm text-gray-900">${formatDate(firstSuggestion.datum)}</td>
+                        <td class="px-4 py-2 text-sm text-red-600">-${formatCurrency(firstSuggestion.amount)}</td>
+                        <td class="px-4 py-2 text-sm text-gray-600 max-w-xs truncate" title="${firstSuggestion.description}">${firstSuggestion.description}</td>
+                        <td class="px-4 py-2 text-sm text-purple-600">Geen bekende vaste kost gevonden</td>
+                        <td class="px-4 py-2 text-sm">
+                            <div class="flex flex-col space-y-1">
+                                ${hasVasteUitgave ? `
+                                <button 
+                                    onclick="acceptVasteUitgaveSuggestion('${firstSuggestion.datum}', ${firstSuggestion.amount}, '${firstSuggestion.description.replace(/'/g, "\\'")}')"
+                                    class="px-2 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600 transition-colors"
+                                    title="Toevoegen als nieuwe vaste uitgave (terugkerend)"
+                                >
+                                    💼 Vaste Uitgave
+                                </button>
+                                ` : ''}
+                                ${hasVariabeleUitgave ? `
+                                <button 
+                                    onclick="acceptVariabeleUitgaveSuggestion('${firstSuggestion.datum}', ${firstSuggestion.amount}, '${firstSuggestion.description.replace(/'/g, "\\'")}')"
+                                    class="px-2 py-1 bg-green-500 text-white text-xs rounded hover:bg-green-600 transition-colors"
+                                    title="Toevoegen als eenmalige variabele uitgave"
+                                >
+                                    📋 Variabele Uitgave
+                                </button>
+                                ` : ''}
+                                <button 
+                                    onclick="ignoreSuggestion('${firstSuggestion.datum}', '${firstSuggestion.description.replace(/'/g, "\\'")}')"
+                                    class="px-2 py-1 bg-gray-400 text-white text-xs rounded hover:bg-gray-500 transition-colors"
+                                    title="Negeren (niet opslaan)"
+                                >
+                                    ✖ Negeren
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            });
+            
+            tbody.innerHTML = html;
         }
         
         // Toggle matched details
@@ -4090,8 +4247,13 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             }
         }
         
-        // Accepteer suggestie en voeg toe als nieuwe vaste uitgave
+        // Accepteer suggestie en voeg toe als nieuwe vaste uitgave (legacy functie)
         function acceptSuggestion(datum, amount, description) {
+            return acceptVasteUitgaveSuggestion(datum, amount, description);
+        }
+        
+        // Accepteer suggestie en voeg toe als nieuwe vaste uitgave
+        function acceptVasteUitgaveSuggestion(datum, amount, description) {
             console.log(`💾 Accepteren suggestie: ${formatCurrency(amount)} voor "${description}"`);
             
             // Extract crediteur naam uit beschrijving (eerste paar woorden)
@@ -4125,6 +4287,41 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             updateDataTables();
             
             console.log('🎉 Suggestie succesvol geaccepteerd en vaste uitgave toegevoegd!');
+        }
+        
+        // Accepteer suggestie en voeg toe als nieuwe variabele uitgave
+        function acceptVariabeleUitgaveSuggestion(datum, amount, description) {
+            console.log(`💾 Accepteren variabele uitgave suggestie: ${formatCurrency(amount)} voor "${description}"`);
+            
+            // Extract categorie uit beschrijving (eerste paar woorden)
+            const words = description.trim().split(/\s+/);
+            const categorie = words.slice(0, Math.min(2, words.length)).join(' ');
+            
+            // Nieuwe variabele uitgave object
+            const nieuweVariabeleUitgave = {
+                id: Date.now().toString(),
+                datum: datum,
+                omschrijving: description,
+                bedrag: amount,
+                categorie: categorie || 'Overig'
+            };
+            
+            // Toevoegen aan variabele uitgaven array
+            variabeleUitgaven.push(nieuweVariabeleUitgave);
+            
+            // Opslaan in localStorage
+            saveDataToStorage();
+            
+            // Success bericht
+            showStatus(`✅ Nieuwe variabele uitgave toegevoegd: ${description.substring(0, 30)} - ${formatCurrency(amount)}`, 'success');
+            
+            // Herrun reconciliation om de nieuwe match te vinden
+            performBankReconciliation();
+            
+            // Update data beheer tabellen
+            updateDataTables();
+            
+            console.log('🎉 Variabele uitgave suggestie succesvol geaccepteerd!');
         }
         
         // Negeer suggestie (doe niets)
@@ -4472,6 +4669,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                         creditFacturen: creditFacturen,
                         creditDeclaraties: creditDeclaraties,
                         correctieFacturen: correctieFacturen,
+                        variabeleUitgaven: variabeleUitgaven,
                         bankmutaties: bankmutaties,
                         huidigBanksaldo: huidigBanksaldo,
                         prognosePeriode: prognosePeriode,
@@ -4512,6 +4710,7 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 creditFacturen = parsed.data.creditFacturen || [];
                 creditDeclaraties = parsed.data.creditDeclaraties || [];
                 correctieFacturen = parsed.data.correctieFacturen || [];
+                variabeleUitgaven = parsed.data.variabeleUitgaven || [];
                 bankmutaties = parsed.data.bankmutaties || [];
                 
                 // Herstel instellingen
