@@ -757,7 +757,9 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Factuurnummer</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Datum</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Debiteur</th>
-                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Origineel Bedrag</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Credits/Correcties</th>
+                                <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Netto Bedrag</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Verwachte Betaling</th>
                                 <th class="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Acties</th>
                             </tr>
@@ -2084,10 +2086,18 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
             const appliedCredits = [];
             const appliedCorrections = [];
             
-            // Zoek matching credit declaraties op factuurnummer
+            console.log(`🔍 Checking credits for declaratie ${declaratie.factuurnummer}:`);
+            console.log(`   Available creditDeclaraties: ${creditDeclaraties?.length || 0}`);
+            console.log(`   Available correctieFacturen: ${correctieFacturen?.length || 0}`);
+            console.log(`   CreditDeclaraties:`, creditDeclaraties);
+            console.log(`   CorrectieFacturen:`, correctieFacturen);
+            
+            // Zoek matching credit declaraties op factuurnummer/factuur
             creditDeclaraties?.forEach(credit => {
-                if (credit.factuurnummer && declaratie.factuurnummer && 
-                    credit.factuurnummer === declaratie.factuurnummer) {
+                const creditFactuur = credit.factuurnummer || credit.factuur;
+                if (creditFactuur && declaratie.factuurnummer && 
+                    creditFactuur === declaratie.factuurnummer) {
+                    console.log(`   ✅ Found credit match: ${creditFactuur} = ${declaratie.factuurnummer}`);
                     const creditAmount = Math.abs(parseFloat(credit.bedrag));
                     totalCredits += creditAmount;
                     appliedCredits.push({
@@ -2099,10 +2109,12 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                 }
             });
             
-            // Zoek matching correctie facturen op factuurnummer  
+            // Zoek matching correctie facturen op factuurnummer/factuur
             correctieFacturen?.forEach(correctie => {
-                if (correctie.factuurnummer && declaratie.factuurnummer && 
-                    correctie.factuurnummer === declaratie.factuurnummer) {
+                const correctieFactuur = correctie.factuurnummer || correctie.factuur;
+                if (correctieFactuur && declaratie.factuurnummer && 
+                    correctieFactuur === declaratie.factuurnummer) {
+                    console.log(`   ✅ Found correctie match: ${correctieFactuur} = ${declaratie.factuurnummer}`);
                     const correctieAmount = Math.abs(parseFloat(correctie.bedrag));
                     totalCorrections += correctieAmount;
                     appliedCorrections.push({
@@ -2211,6 +2223,46 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     </td>
                 `;
             });
+        }
+
+        // Bereken netto bedrag voor een particulier factuur (origineel - credits)
+        function calculateParticulierNettoInfo(factuur) {
+            const originalAmount = parseFloat(factuur.bedrag);
+            let totalCredits = 0;
+            const appliedCredits = [];
+            
+            console.log(`🔍 Checking credits for particulier factuur ${factuur.factuur}:`);
+            console.log(`   Available creditFacturen: ${creditFacturen?.length || 0}`);
+            console.log(`   CreditFacturen:`, creditFacturen);
+            
+            // Zoek matching credit facturen op factuurnummer
+            creditFacturen?.forEach(credit => {
+                const creditFactuur = credit.factuurnummer || credit.factuur;
+                if (creditFactuur && factuur.factuur && 
+                    creditFactuur === factuur.factuur) {
+                    console.log(`   ✅ Found credit match: ${creditFactuur} = ${factuur.factuur}`);
+                    const creditAmount = Math.abs(parseFloat(credit.bedrag));
+                    totalCredits += creditAmount;
+                    appliedCredits.push({
+                        type: 'credit_factuur',
+                        amount: creditAmount,
+                        datum: credit.datum,
+                        reden: credit.reden || 'Credit factuur'
+                    });
+                }
+            });
+            
+            const nettoAmount = originalAmount - totalCredits;
+            const hasCorrections = appliedCredits.length > 0;
+            
+            return {
+                originalAmount: originalAmount,
+                totalCredits: totalCredits,
+                nettoAmount: nettoAmount,
+                hasCorrections: hasCorrections,
+                appliedCredits: appliedCredits,
+                allCorrections: [...appliedCredits]
+            };
         }
 
         // Toon gedetailleerde credit/correctie informatie voor een declaratie
@@ -2739,13 +2791,43 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                     item.factuur === pf.factuur && item.datum === pf.datum && item.debiteur === pf.debiteur
                 );
                 
+                // Bereken netto informatie voor deze particulier factuur
+                const nettoInfo = calculateParticulierNettoInfo(pf);
+                
                 const row = tbody.insertRow();
+                row.className = nettoInfo.hasCorrections ? 'bg-yellow-50' : '';
                 row.innerHTML = `
                     <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-gray-900">${pf.factuur}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${new Date(pf.datum).toLocaleDateString('nl-NL')}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-gray-900">${pf.debiteur}</td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm font-medium text-green-600">
-                        € ${pf.bedrag.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                        € ${nettoInfo.originalAmount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm">
+                        ${nettoInfo.hasCorrections ? `
+                            <div class="text-red-600 text-xs">
+                                ${nettoInfo.appliedCredits.length > 0 ? `
+                                    <div class="mb-1 font-medium">-€ ${nettoInfo.totalCredits.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}</div>
+                                    ${nettoInfo.appliedCredits.map(credit => `
+                                        <div class="text-xs text-gray-600">
+                                            • Credit: -€${credit.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                                        </div>
+                                    `).join('')}
+                                ` : ''}
+                            </div>
+                        ` : '<span class="text-gray-400 text-xs">Geen</span>'}
+                    </td>
+                    <td class="px-4 py-4 whitespace-nowrap text-sm font-medium ${
+                        nettoInfo.nettoAmount === nettoInfo.originalAmount ? 'text-green-600' : 
+                        nettoInfo.nettoAmount > 0 ? 'text-yellow-600' : 'text-red-600'
+                    }">
+                        € ${nettoInfo.nettoAmount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}
+                        ${nettoInfo.hasCorrections ? `
+                            <div class="text-xs text-gray-500 mt-1">
+                                ${nettoInfo.nettoAmount === nettoInfo.originalAmount ? 'Ongewijzigd' : 
+                                  nettoInfo.nettoAmount > 0 ? 'Verlaagd' : 'Volledig gecrediteerd'}
+                            </div>
+                        ` : ''}
                     </td>
                     <td class="px-4 py-4 whitespace-nowrap text-sm text-blue-600 font-medium">
                         ${new Date(pf.verwachteBetaaldatum).toLocaleDateString('nl-NL')}
@@ -2757,8 +2839,58 @@ CO202500009602	26-9-2025	VGZ	202500009602	€ 15,50" class="w-full h-32 px-3 py-
                         <button onclick="deleteParticulierFactuur(${index})" class="text-red-600 hover:text-red-900">
                             🗑️ Verwijderen
                         </button>
+                        ${nettoInfo.hasCorrections ? `
+                            <button onclick="showParticulierCreditDetails('${pf.factuur}')" class="text-purple-600 hover:text-purple-900 ml-2 text-xs">
+                                🔍 Details
+                            </button>
+                        ` : ''}
                     </td>
                 `;
+            });
+        }
+
+        // Toon gedetailleerde credit informatie voor een particulier factuur
+        function showParticulierCreditDetails(factuurNummer) {
+            console.log(`🔍 Tonen credit details voor particulier factuur: ${factuurNummer}`);
+            
+            // Vind de oorspronkelijke particulier factuur
+            const factuur = particulierFacturen.find(f => f.factuur === factuurNummer);
+            if (!factuur) {
+                alert('Particulier factuur niet gevonden!');
+                return;
+            }
+            
+            // Bereken netto informatie
+            const nettoInfo = calculateParticulierNettoInfo(factuur);
+            
+            // Bouw gedetailleerde informatie string
+            let details = `📊 CREDIT DETAILS - Particulier Factuur: ${factuurNummer}\n\n`;
+            details += `🔵 Origineel bedrag: €${nettoInfo.originalAmount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}\n`;
+            
+            if (nettoInfo.appliedCredits.length > 0) {
+                details += `\n🔴 CREDIT FACTUREN:\n`;
+                nettoInfo.appliedCredits.forEach((credit, index) => {
+                    details += `  ${index + 1}. -€${credit.amount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })} (${new Date(credit.datum).toLocaleDateString('nl-NL')}) - ${credit.reden}\n`;
+                });
+                details += `     Totaal credits: -€${nettoInfo.totalCredits.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}\n`;
+            }
+            
+            const nettoColor = nettoInfo.nettoAmount > 0 ? '🟢' : nettoInfo.nettoAmount === 0 ? '🟡' : '🔴';
+            details += `\n${nettoColor} NETTO BEDRAG: €${nettoInfo.nettoAmount.toLocaleString('nl-NL', { minimumFractionDigits: 2 })}\n`;
+            
+            if (nettoInfo.nettoAmount !== nettoInfo.originalAmount) {
+                const verschil = nettoInfo.originalAmount - nettoInfo.nettoAmount;
+                details += `   Verschil: -€${verschil.toLocaleString('nl-NL', { minimumFractionDigits: 2 })} (${((verschil / nettoInfo.originalAmount) * 100).toFixed(1)}%)\n`;
+            }
+            
+            // Toon in modal/alert
+            alert(details);
+            
+            // Log ook naar console voor debugging
+            console.log('Particulier Credit Details:', {
+                factuurNummer: factuurNummer,
+                nettoInfo: nettoInfo,
+                details: details
             });
         }
 
